@@ -31,7 +31,8 @@ const STORAGE_KEYS = {
   MOVEMENTS: 'yasta_v5_movements',
   TICKETS: 'yasta_v5_tickets',
   AUDIT_LOGS: 'yasta_v5_audit_logs',
-  CURRENT_USER_ID: 'yasta_v5_current_user_id',
+  // Cambiar la clave evita reutilizar la sesión de superadmin creada por versiones anteriores.
+  CURRENT_USER_ID: 'yasta_v6_current_user_id',
 };
 
 // Inicialización de la base de datos limpia en localStorage
@@ -47,7 +48,8 @@ export function initializeStorage(forceReset = false): void {
     localStorage.setItem(STORAGE_KEYS.MOVEMENTS, JSON.stringify(INITIAL_MOVEMENTS));
     localStorage.setItem(STORAGE_KEYS.TICKETS, JSON.stringify(INITIAL_TICKETS));
     localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(INITIAL_AUDIT_LOGS));
-    localStorage.setItem(STORAGE_KEYS.CURRENT_USER_ID, 'usr_superadmin');
+    // Las visitas nuevas siempre comienzan sin sesión iniciada.
+    localStorage.removeItem(STORAGE_KEYS.CURRENT_USER_ID);
   }
 }
 
@@ -163,6 +165,121 @@ export function loginDueno(email: string, pass: string): { user?: User; error?: 
 
   setCurrentUser(user);
   return { user };
+}
+
+export interface OwnerBusinessRegistrationData {
+  responsableNombre: string;
+  celular: string;
+  email: string;
+  password: string;
+  nombreNegocio: string;
+  tipoNegocio: string;
+  ciudad: string;
+  departamento: string;
+  direccion: string;
+}
+
+function createBusinessSlug(nombre: string, businesses: Business[]): string {
+  const base = nombre
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'negocio';
+
+  let slug = base;
+  let suffix = 2;
+  while (businesses.some((business) => business.slug.toLowerCase() === slug.toLowerCase())) {
+    slug = `${base}-${suffix}`;
+    suffix += 1;
+  }
+  return slug;
+}
+
+export function registerOwnerWithBusiness(
+  data: OwnerBusinessRegistrationData
+): { user?: User; business?: Business; error?: string } {
+  const nombre = data.responsableNombre.trim();
+  const celular = data.celular.trim();
+  const email = data.email.trim().toLowerCase();
+  const nombreNegocio = data.nombreNegocio.trim();
+  const tipoNegocio = data.tipoNegocio.trim();
+  const ciudad = data.ciudad.trim();
+  const departamento = data.departamento.trim();
+  const direccion = data.direccion.trim();
+
+  if (!nombre || !celular || !email || !data.password || !nombreNegocio || !tipoNegocio || !ciudad || !departamento || !direccion) {
+    return { error: 'Completa todos los campos obligatorios para crear la cuenta y el perfil del negocio.' };
+  }
+
+  const emailIsValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  if (!emailIsValid) return { error: 'Escribe un correo electrónico válido.' };
+  if (data.password.length < 8) return { error: 'La contraseña debe tener al menos 8 caracteres.' };
+
+  const phoneDigits = celular.replace(/\D/g, '');
+  const normalizedPhone = phoneDigits.startsWith('504')
+    ? `+504 ${phoneDigits.slice(3, 7)}-${phoneDigits.slice(7)}`
+    : `+504 ${phoneDigits.slice(0, 4)}-${phoneDigits.slice(4)}`;
+  if (phoneDigits.length !== 8 && !(phoneDigits.startsWith('504') && phoneDigits.length === 11)) {
+    return { error: 'Escribe un celular hondureño de 8 dígitos, con o sin el prefijo +504.' };
+  }
+
+  const users = getAllUsers();
+  if (users.some((user) => user.email?.trim().toLowerCase() === email)) {
+    return { error: 'Ya existe una cuenta con ese correo electrónico. Inicia sesión o utiliza otro correo.' };
+  }
+
+  const businesses = getBusinesses();
+  const now = new Date().toISOString();
+  const uniqueSuffix = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const businessId = `biz_${uniqueSuffix}`;
+  const newUser: User = {
+    id: `usr_${uniqueSuffix}`,
+    nombre,
+    celular: normalizedPhone,
+    email,
+    role: 'dueno',
+    password: data.password,
+    ownedBusinessIds: [businessId],
+    avatarUrl: null,
+    createdAt: now,
+  };
+  const newBusiness: Business = {
+    id: businessId,
+    slug: createBusinessSlug(nombreNegocio, businesses),
+    nombre: nombreNegocio,
+    tipoNegocio,
+    logoUrl: '',
+    bannerUrl: '',
+    descripcion: '',
+    direccion,
+    ciudad,
+    departamento,
+    horario: 'Por definir',
+    telefono: normalizedPhone,
+    ownerId: newUser.id,
+    estado: 'activo',
+    pinAccesoMenu: '',
+    categorias: [],
+    createdAt: now,
+  };
+
+  users.push(newUser);
+  businesses.push(newBusiness);
+  set(STORAGE_KEYS.USERS, users);
+  set(STORAGE_KEYS.BUSINESSES, businesses);
+  setCurrentUser(newUser);
+
+  addAuditLog({
+    usuarioId: newUser.id,
+    usuarioNombre: newUser.nombre,
+    rol: 'dueno',
+    accion: 'REGISTRO_NEGOCIO',
+    descripcion: `Se creó la cuenta de ${newUser.nombre} y el perfil del negocio "${newBusiness.nombre}".`,
+    entidadAfectada: newBusiness.id,
+  });
+
+  return { user: newUser, business: newBusiness };
 }
 
 export function loginSuperadmin(email: string, pass: string): { user?: User; error?: string } {
