@@ -36,7 +36,7 @@ export const TopBar: React.FC<TopBarProps> = ({
     if (currentRoute === '/') return 'Cafeterías y Comedores';
     if (currentRoute.startsWith('/c/')) return 'Menú de Cafetería';
     if (currentRoute === '/cliente') return 'Mis Pedidos y Saldos';
-    if (currentRoute === '/dueno') return 'Panel de Gestión Comercial';
+    if (currentRoute === '/dueno' || (currentRoute.startsWith('/dueno/') && !currentRoute.includes('ingresar') && !currentRoute.includes('registro'))) return 'Panel de Gestión Comercial';
     if (currentRoute === '/superadmin') return 'Superadministración de Plataforma';
     if (currentRoute === '/soporte') return 'Centro de Soporte y Casos';
     if (currentRoute.includes('ingresar')) return 'Iniciar Sesión';
@@ -115,7 +115,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                       className="w-full px-4 py-2 text-left text-xs text-stone-700 hover:bg-stone-50 flex items-center gap-2 transition-colors"
                     >
                       <UserIcon className="w-4 h-4 text-stone-500" />
-                      Foto de perfil
+                      Editar perfil
                     </button>
 
                     {currentUser.role === 'cliente' && (
