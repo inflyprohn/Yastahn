@@ -3,6 +3,7 @@ import { User as UserIcon, Lock, Phone, ArrowRight, ShieldAlert, Check } from 'l
 import { User } from '../types';
 import { formatHondurasPhone, isValidHondurasPhone, isValidPIN } from '../utils/formatters';
 import { loginCliente, registerCliente } from '../services/storage';
+import { SecretVisibilityToggle } from '../components/SecretVisibilityToggle';
 
 interface ClientAuthViewProps {
   mode: 'ingresar' | 'registro';
@@ -21,6 +22,7 @@ export const ClientAuthView: React.FC<ClientAuthViewProps> = ({
   const [nombre, setNombre] = useState('');
   const [celular, setCelular] = useState('');
   const [pin, setPin] = useState('');
+  const [showPin, setShowPin] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -136,13 +138,18 @@ export const ClientAuthView: React.FC<ClientAuthViewProps> = ({
             <div className="relative">
               <Lock className="w-4 h-4 text-stone-400 absolute left-3 top-3" />
               <input
-                type="password"
+                type={showPin ? 'text' : 'password'}
                 maxLength={4}
                 required
                 placeholder="••••"
                 value={pin}
                 onChange={(e) => setPin(e.target.value)}
-                className="w-full bg-stone-50 border border-stone-200 rounded-xl pl-9 pr-3 py-2.5 text-xs font-mono tracking-widest text-stone-900 focus:outline-none focus:ring-1 focus:ring-amber-600"
+                className="w-full bg-stone-50 border border-stone-200 rounded-xl pl-9 pr-11 py-2.5 text-xs font-mono tracking-widest text-stone-900 focus:outline-none focus:ring-1 focus:ring-amber-600"
+              />
+              <SecretVisibilityToggle
+                visible={showPin}
+                onToggle={() => setShowPin((visible) => !visible)}
+                label="el PIN"
               />
             </div>
             <p className="text-[10px] text-stone-400 mt-1">
