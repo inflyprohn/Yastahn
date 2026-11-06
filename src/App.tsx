@@ -208,7 +208,7 @@ export default function App() {
     }
 
     // 4. Portal de Dueño (/dueno) - Protegido
-    if (currentRoute === '/dueno') {
+    if (currentRoute === '/dueno' || currentRoute.startsWith('/dueno/')) {
       if (!currentUser || (currentUser.role !== 'dueno' && currentUser.role !== 'superadmin')) {
         return (
           <div className="bg-white rounded-3xl p-12 text-center border border-stone-200 max-w-md mx-auto my-12 space-y-4">
@@ -238,9 +238,9 @@ export default function App() {
       return (
         <OwnerPortalView
           currentUser={currentUser}
+          currentRoute={currentRoute}
           onNavigate={navigateTo}
           onSelectCafe={handleSelectCafe}
-          onUserUpdated={handleUserChanged}
         />
       );
     }
@@ -302,10 +302,8 @@ export default function App() {
         currentUser={currentUser}
         currentRoute={currentRoute}
         onNavigate={navigateTo}
-        onUserChanged={handleUserChanged}
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-        onOpenAvatarModal={() => setShowGlobalAvatarModal(true)}
         mobileOpen={mobileSidebarOpen}
         onCloseMobile={() => setMobileSidebarOpen(false)}
       />
