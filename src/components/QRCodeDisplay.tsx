@@ -21,11 +21,8 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
     typeof window !== 'undefined'
       ? (import.meta as any).env?.VITE_PUBLIC_APP_URL || window.location.origin
       : 'https://yasta.hn';
-  const appBasePath = (import.meta.env.BASE_URL || '/').replace(/\/?$/, '/');
-  const publicUrl = new URL(
-    `${appBasePath}c/${encodeURIComponent(business.slug)}`,
-    `${appOrigin.replace(/\/$/, '')}/`
-  ).toString();
+
+  const publicUrl = `${appOrigin}/c/${business.slug}`;
 
   useEffect(() => {
     if (canvasRef.current) {

@@ -18,6 +18,7 @@ import {
   Edit3,
   X,
   Building2,
+  RotateCcw,
 } from 'lucide-react';
 import { Business, SupportTicket, TicketStatus, User } from '../types';
 import { formatHondurasDateTime } from '../utils/formatters';
@@ -32,6 +33,7 @@ import {
   saveBusiness,
   saveMenuItem,
   getAllUsers,
+  resetPlatformToClean,
 } from '../services/storage';
 import { UserAvatar } from '../components/UserAvatar';
 import { AvatarModal } from '../components/AvatarModal';
@@ -53,6 +55,11 @@ export const SuperadminPortalView: React.FC<SuperadminPortalViewProps> = ({
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [feedbackToast, setFeedbackToast] = useState<string | null>(null);
+
+  // Estados para modales de confirmación en UI (sin window.confirm)
+  const [businessToDelete, setBusinessToDelete] = useState<Business | null>(null);
+  const [businessToToggle, setBusinessToToggle] = useState<Business | null>(null);
+  const [showResetPlatformModal, setShowResetPlatformModal] = useState(false);
 
   // Trigger feedback
   const showToast = (msg: string) => {
@@ -219,7 +226,7 @@ export const SuperadminPortalView: React.FC<SuperadminPortalViewProps> = ({
       return;
     }
 
-    // Si es creación nueva, sembrar platos demostrativos para que el menú esté listo para pedir
+    // Si es creación nueva, sembrar platos iniciales para que el menú esté listo para pedir
     if (modalMode === 'create') {
       const initialDishes = [
         {
@@ -268,37 +275,14 @@ export const SuperadminPortalView: React.FC<SuperadminPortalViewProps> = ({
     );
   };
 
-  // Eliminar negocio permanentemente
+  // Abrir modal de confirmación para eliminar negocio permanentemente
   const handleDeleteBusiness = (business: Business) => {
-    if (
-      window.confirm(
-        `¿Confirmas que deseas ELIMINAR permanentemente el negocio "${business.nombre}" (/c/${business.slug})?\n\nEsta acción borrará todo el menú y los datos asociados.`
-      )
-    ) {
-      const res = deleteBusiness(business.id, currentUser);
-      if (res.success) {
-        setRefreshKey((k) => k + 1);
-        showToast(`Negocio "${business.nombre}" eliminado permanentemente.`);
-      } else {
-        alert(res.error || 'Error al eliminar el negocio.');
-      }
-    }
+    setBusinessToDelete(business);
   };
 
-  // Suspender / Reactivar cafetería
+  // Abrir modal de confirmación para suspender / reactivar cafetería
   const handleToggleBusinessStatus = (business: Business) => {
-    const nextStatus = business.estado === 'activo' ? 'suspendido' : 'activo';
-    const actionLabel = nextStatus === 'suspendido' ? 'suspender' : 'reactivar';
-
-    if (
-      window.confirm(
-        `¿Confirmas que deseas ${actionLabel} el negocio "${business.nombre}"? Esta acción quedará registrada en el log de auditoría.`
-      )
-    ) {
-      setBusinessStatus(business.id, nextStatus, currentUser);
-      setRefreshKey((k) => k + 1);
-      showToast(`Negocio ${business.nombre} ${nextStatus === 'activo' ? 'reactivado' : 'suspendido'} con éxito.`);
-    }
+    setBusinessToToggle(business);
   };
 
   // Responder a ticket
@@ -361,13 +345,19 @@ export const SuperadminPortalView: React.FC<SuperadminPortalViewProps> = ({
           </div>
 
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-black text-stone-900 tracking-tight">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-black text-stone-900 tracking-tight font-orlando">
                 Superadministración Yasta
               </h1>
-              <span className="text-[11px] font-bold text-stone-800 bg-stone-100 px-2 py-0.5 rounded-md border border-stone-200">
-                Lic. Roberto Paz
-              </span>
+              <button
+                onClick={() => setShowAvatarModal(true)}
+                title="Haga clic para editar su nombre de perfil o foto"
+                className="group flex items-center gap-1.5 text-xs font-bold text-stone-800 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-xl border border-amber-200/80 transition-colors shadow-2xs"
+              >
+                <span>{currentUser.nombre}</span>
+                <Edit3 className="w-3.5 h-3.5 text-amber-700 group-hover:text-amber-900" />
+                <span className="text-[10px] text-amber-800 font-normal underline">Editar</span>
+              </button>
             </div>
             <p className="text-xs text-stone-600 mt-1">
               Supervisión de cafeterías activas, bandeja global de tickets y auditoría de seguridad.
@@ -424,7 +414,7 @@ export const SuperadminPortalView: React.FC<SuperadminPortalViewProps> = ({
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div>
               <h3 className="text-base font-bold text-stone-900">
-                Gestión de Cafeterías en Demostración
+                Gestión de Cafeterías y Comedores
               </h3>
               <p className="text-xs text-stone-500">
                 Supervisa, agrega nuevos negocios, edita sus datos, suspende o elimina locales.
@@ -439,6 +429,15 @@ export const SuperadminPortalView: React.FC<SuperadminPortalViewProps> = ({
               >
                 <Plus className="w-4 h-4" />
                 Agregar Negocio
+              </button>
+
+              <button
+                onClick={() => setShowResetPlatformModal(true)}
+                className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shadow-xs shrink-0"
+                title="Vaciar catálogo y reiniciar plataforma a nuevo"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Reset a Nuevo
               </button>
 
               <div className="relative">
@@ -465,14 +464,26 @@ export const SuperadminPortalView: React.FC<SuperadminPortalViewProps> = ({
           </div>
 
           {filteredBusinesses.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-stone-200 p-8 text-center text-xs text-stone-500 space-y-3">
-              <p>No se encontraron cafeterías con los filtros aplicados.</p>
+            <div className="bg-white rounded-3xl border border-stone-200 p-10 sm:p-14 text-center space-y-4 shadow-xs">
+              <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-800 border border-amber-200 flex items-center justify-center mx-auto">
+                <Store className="w-7 h-7" />
+              </div>
+              <div className="max-w-md mx-auto space-y-1">
+                <h4 className="text-base font-bold text-stone-900 font-orlando">
+                  {businesses.length === 0 ? 'Catálogo listo y limpio' : 'Sin resultados de cafeterías'}
+                </h4>
+                <p className="text-xs text-stone-500">
+                  {businesses.length === 0
+                    ? 'No hay cafeterías de demostración. La plataforma está completamente limpia para registrar tus negocios reales.'
+                    : 'No se encontraron cafeterías que coincidan con la búsqueda o filtro aplicado.'}
+                </p>
+              </div>
               <button
                 onClick={handleOpenCreate}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-stone-900 text-white rounded-xl text-xs font-bold"
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-bold transition-colors shadow-xs"
               >
-                <Plus className="w-3.5 h-3.5" />
-                Crear nuevo negocio
+                <Plus className="w-4 h-4" />
+                {businesses.length === 0 ? 'Registrar Primera Cafetería' : 'Agregar nuevo negocio'}
               </button>
             </div>
           ) : (
@@ -1053,13 +1064,192 @@ export const SuperadminPortalView: React.FC<SuperadminPortalViewProps> = ({
         </div>
       )}
 
-      {/* Modal Foto de Perfil */}
+      {/* Modal de Confirmación para Eliminar Negocio */}
+      {businessToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-stone-200 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-base font-bold text-stone-900 font-orlando">¿Eliminar Negocio?</h4>
+                <p className="text-xs text-stone-600">
+                  Estás a punto de eliminar permanentemente <strong className="text-stone-900">"{businessToDelete.nombre}"</strong> (/c/{businessToDelete.slug}).
+                </p>
+                <p className="text-[11px] text-rose-600 font-medium">
+                  Esta acción borrará todo el menú y los datos asociados a este negocio.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-stone-100">
+              <button
+                type="button"
+                onClick={() => setBusinessToDelete(null)}
+                className="px-4 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-100 rounded-xl transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const res = deleteBusiness(businessToDelete.id, currentUser);
+                  if (res.success) {
+                    setRefreshKey((k) => k + 1);
+                    showToast(`Negocio "${businessToDelete.nombre}" eliminado permanentemente.`);
+                  } else {
+                    showToast(res.error || 'No se pudo eliminar el negocio.');
+                  }
+                  setBusinessToDelete(null);
+                }}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-colors shadow-xs flex items-center gap-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Eliminar Permanentemente
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmación para Suspender / Reactivar Negocio */}
+      {businessToToggle && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-stone-200 space-y-4">
+            <div className="flex items-start gap-3">
+              <div
+                className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                  businessToToggle.estado === 'activo'
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-emerald-100 text-emerald-800'
+                }`}
+              >
+                {businessToToggle.estado === 'activo' ? (
+                  <AlertTriangle className="w-5 h-5" />
+                ) : (
+                  <CheckCircle2 className="w-5 h-5" />
+                )}
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-base font-bold text-stone-900 font-orlando">
+                  {businessToToggle.estado === 'activo'
+                    ? `¿Suspender "${businessToToggle.nombre}"?`
+                    : `¿Reactivar "${businessToToggle.nombre}"?`}
+                </h4>
+                <p className="text-xs text-stone-600">
+                  {businessToToggle.estado === 'activo'
+                    ? 'Los clientes no podrán realizar nuevos pedidos mientras el local esté suspendido.'
+                    : 'El local volverá a estar disponible para pedidos de los clientes.'}
+                </p>
+                <p className="text-[11px] text-stone-400">
+                  Esta acción quedará registrada en el log de auditoría.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-stone-100">
+              <button
+                type="button"
+                onClick={() => setBusinessToToggle(null)}
+                className="px-4 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-100 rounded-xl transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const nextStatus = businessToToggle.estado === 'activo' ? 'suspendido' : 'activo';
+                  setBusinessStatus(businessToToggle.id, nextStatus, currentUser);
+                  setRefreshKey((k) => k + 1);
+                  showToast(
+                    `Negocio "${businessToToggle.nombre}" ${
+                      nextStatus === 'activo' ? 'reactivado' : 'suspendido'
+                    } con éxito.`
+                  );
+                  setBusinessToToggle(null);
+                }}
+                className={`px-4 py-2 rounded-xl text-xs font-bold text-white transition-colors shadow-xs ${
+                  businessToToggle.estado === 'activo'
+                    ? 'bg-amber-800 hover:bg-amber-900'
+                    : 'bg-emerald-700 hover:bg-emerald-800'
+                }`}
+              >
+                {businessToToggle.estado === 'activo' ? 'Confirmar Suspensión' : 'Confirmar Reactivación'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmación para Resetear Plataforma a Nuevo */}
+      {showResetPlatformModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-stone-200 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
+                <RotateCcw className="w-5 h-5" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-base font-bold text-stone-900 font-orlando">
+                  ¿Reiniciar catálogo a nuevo?
+                </h4>
+                <p className="text-xs text-stone-600">
+                  Esta acción vaciará completamente el catálogo de cafeterías, menús y pedidos asociados para dejar la plataforma totalmente limpia desde cero.
+                </p>
+                <p className="text-[11px] text-stone-500">
+                  Tu cuenta de administrador continuará activa.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-stone-100">
+              <button
+                type="button"
+                onClick={() => setShowResetPlatformModal(false)}
+                className="px-4 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-100 rounded-xl transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const res = resetPlatformToClean(currentUser);
+                  if (res.success) {
+                    setRefreshKey((k) => k + 1);
+                    showToast('Plataforma reiniciada a nuevo. El catálogo está completamente limpio.');
+                  } else {
+                    showToast(res.error || 'Error al reiniciar la plataforma.');
+                  }
+                  setShowResetPlatformModal(false);
+                }}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-colors shadow-xs flex items-center gap-1.5"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Sí, Reiniciar a Nuevo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Perfil y Foto */}
       <AvatarModal
         user={currentUser}
         isOpen={showAvatarModal}
         onClose={() => setShowAvatarModal(false)}
-        onAvatarUpdated={(newAvatar) => {
-          onUserUpdated({ ...currentUser, avatarUrl: newAvatar });
+        onAvatarUpdated={(newAvatar, newName) => {
+          const updated = {
+            ...currentUser,
+            avatarUrl: newAvatar,
+            nombre: newName || currentUser.nombre,
+          };
+          onUserUpdated(updated);
+          setRefreshKey((k) => k + 1);
+        }}
+        onUserUpdated={(updatedUser) => {
+          onUserUpdated(updatedUser);
+          setRefreshKey((k) => k + 1);
         }}
       />
     </div>

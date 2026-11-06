@@ -23,22 +23,22 @@ import {
 } from './mockData';
 
 const STORAGE_KEYS = {
-  USERS: 'yasta_demo_users_v4',
-  BUSINESSES: 'yasta_demo_businesses_v4',
-  MENU_ITEMS: 'yasta_demo_menu_items_v4',
-  ORDERS: 'yasta_demo_orders_v4',
-  ACCOUNTS: 'yasta_demo_accounts_v4',
-  MOVEMENTS: 'yasta_demo_movements_v4',
-  TICKETS: 'yasta_demo_tickets_v4',
-  AUDIT_LOGS: 'yasta_demo_audit_logs_v4',
-  CURRENT_USER_ID: 'yasta_demo_current_user_id_v4',
+  USERS: 'yasta_v5_users',
+  BUSINESSES: 'yasta_v5_businesses',
+  MENU_ITEMS: 'yasta_v5_menu_items',
+  ORDERS: 'yasta_v5_orders',
+  ACCOUNTS: 'yasta_v5_accounts',
+  MOVEMENTS: 'yasta_v5_movements',
+  TICKETS: 'yasta_v5_tickets',
+  AUDIT_LOGS: 'yasta_v5_audit_logs',
+  CURRENT_USER_ID: 'yasta_v5_current_user_id',
 };
 
-// Inicialización de la base de datos simulada en localStorage
+// Inicialización de la base de datos limpia en localStorage
 export function initializeStorage(forceReset = false): void {
   if (typeof window === 'undefined') return;
 
-  if (forceReset || !localStorage.getItem(STORAGE_KEYS.BUSINESSES)) {
+  if (forceReset || !localStorage.getItem(STORAGE_KEYS.USERS)) {
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
     localStorage.setItem(STORAGE_KEYS.BUSINESSES, JSON.stringify(INITIAL_BUSINESSES));
     localStorage.setItem(STORAGE_KEYS.MENU_ITEMS, JSON.stringify(INITIAL_MENU_ITEMS));
@@ -47,7 +47,7 @@ export function initializeStorage(forceReset = false): void {
     localStorage.setItem(STORAGE_KEYS.MOVEMENTS, JSON.stringify(INITIAL_MOVEMENTS));
     localStorage.setItem(STORAGE_KEYS.TICKETS, JSON.stringify(INITIAL_TICKETS));
     localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(INITIAL_AUDIT_LOGS));
-    localStorage.setItem(STORAGE_KEYS.CURRENT_USER_ID, 'usr_carlos');
+    localStorage.setItem(STORAGE_KEYS.CURRENT_USER_ID, 'usr_superadmin');
   }
 }
 
@@ -158,7 +158,7 @@ export function loginDueno(email: string, pass: string): { user?: User; error?: 
   const user = users.find((u) => u.email?.toLowerCase() === email.toLowerCase() && u.role === 'dueno');
 
   if (!user || user.password !== pass) {
-    return { error: 'Correo o contraseña incorrectos. Para la demo revise las credenciales en el pie de página.' };
+    return { error: 'Correo o contraseña incorrectos. Por favor verifique sus datos de acceso.' };
   }
 
   setCurrentUser(user);
@@ -177,25 +177,89 @@ export function loginSuperadmin(email: string, pass: string): { user?: User; err
   return { user };
 }
 
-export function updateUserAvatar(userId: string, avatarUrl: string | null, actingUser: User): boolean {
-  // Solo el propio usuario o superadmin puede actualizar su avatar
+export function updateUserProfile(
+  userId: string,
+  data: { nombre: string; avatarUrl?: string | null; celular?: string },
+  actingUser: User
+): { success: boolean; user?: User; error?: string } {
   if (actingUser.id !== userId && actingUser.role !== 'superadmin') {
-    return false;
+    return { success: false, error: 'No autorizado para editar este perfil.' };
+  }
+
+  const cleanName = data.nombre?.trim();
+  if (!cleanName) {
+    return { success: false, error: 'El nombre de perfil no puede estar vacío.' };
   }
 
   const users = getAllUsers();
   const index = users.findIndex((u) => u.id === userId);
-  if (index === -1) return false;
+  if (index === -1) {
+    return { success: false, error: 'Usuario no encontrado.' };
+  }
 
-  users[index].avatarUrl = avatarUrl;
+  const oldName = users[index].nombre;
+  users[index].nombre = cleanName;
+  if (data.avatarUrl !== undefined) {
+    users[index].avatarUrl = data.avatarUrl;
+  }
+  if (data.celular !== undefined && data.celular.trim()) {
+    users[index].celular = data.celular.trim();
+  }
+
   set(STORAGE_KEYS.USERS, users);
 
-  // Si es el usuario activo, refrescar
   if (actingUser.id === userId) {
     setCurrentUser(users[index]);
   }
 
-  return true;
+  addAuditLog({
+    usuarioId: actingUser.id,
+    usuarioNombre: cleanName,
+    rol: actingUser.role,
+    accion: 'ACTUALIZAR_PERFIL',
+    descripcion: `Se actualizó el nombre de perfil de "${oldName}" a "${cleanName}".`,
+    entidadAfectada: userId,
+  });
+
+  return { success: true, user: users[index] };
+}
+
+export function updateUserAvatar(userId: string, avatarUrl: string | null, actingUser: User): boolean {
+  const res = updateUserProfile(userId, { nombre: actingUser.nombre, avatarUrl }, actingUser);
+  return res.success;
+}
+
+export function resetPlatformToClean(actingUser: User): { success: boolean; error?: string } {
+  if (actingUser.role !== 'superadmin') {
+    return { success: false, error: 'Solo el superadministrador puede reiniciar la plataforma.' };
+  }
+
+  set(STORAGE_KEYS.BUSINESSES, []);
+  set(STORAGE_KEYS.MENU_ITEMS, []);
+  set(STORAGE_KEYS.ORDERS, []);
+  set(STORAGE_KEYS.ACCOUNTS, []);
+  set(STORAGE_KEYS.MOVEMENTS, []);
+  set(STORAGE_KEYS.TICKETS, []);
+
+  // Limpiar ownedBusinessIds en usuarios dueños
+  const users = getAllUsers();
+  users.forEach((u) => {
+    if (u.ownedBusinessIds && u.ownedBusinessIds.length > 0) {
+      u.ownedBusinessIds = [];
+    }
+  });
+  set(STORAGE_KEYS.USERS, users);
+
+  addAuditLog({
+    usuarioId: actingUser.id,
+    usuarioNombre: actingUser.nombre,
+    rol: actingUser.role,
+    accion: 'RESET_PLATAFORMA',
+    descripcion: `El superadministrador ${actingUser.nombre} reinició la plataforma a nuevo. Se vació el catálogo de cafeterías y datos transaccionales.`,
+    entidadAfectada: 'sistema',
+  });
+
+  return { success: true };
 }
 
 // ==================== NEGOCIOS / CAFETERÍAS ====================

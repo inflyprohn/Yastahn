@@ -5,9 +5,6 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
-    // GitHub Pages serves project sites below /<repository>/.
-    // Keep the root path for AI Studio and local previews.
-    base: process.env.VITE_BASE_PATH || (process.env.GITHUB_PAGES === 'true' ? '/Yastahn/' : '/'),
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

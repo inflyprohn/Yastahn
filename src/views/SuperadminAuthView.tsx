@@ -58,16 +58,6 @@ export const SuperadminAuthView: React.FC<SuperadminAuthViewProps> = ({
           </p>
         </div>
 
-        {/* Botón rápido para demo */}
-        <button
-          type="button"
-          onClick={handleAutofillAdmin}
-          className="w-full py-2 px-3 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
-        >
-          <Check className="w-3.5 h-3.5 text-stone-900" />
-          Autocompletar con cuenta demo (Lic. Roberto Paz)
-        </button>
-
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-stone-700 mb-1">

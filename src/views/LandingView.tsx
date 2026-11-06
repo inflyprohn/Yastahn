@@ -2,7 +2,6 @@ import React from 'react';
 import { Coffee, ArrowRight, QrCode, ShoppingBag, Shield, Clock, MapPin, Phone, CheckCircle2, KeyRound } from 'lucide-react';
 import { Business, User } from '../types';
 import { getBusinesses } from '../services/storage';
-import heroHonduranCafe from '../assets/images/hero_honduran_cafe_1793908265168.jpg';
 
 interface LandingViewProps {
   currentUser: User | null;
@@ -24,7 +23,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
       <section className="relative overflow-hidden rounded-3xl bg-stone-900 text-white shadow-xl">
         <div className="absolute inset-0 z-0 opacity-40 mix-blend-overlay">
           <img
-            src={heroHonduranCafe}
+            src="/src/assets/images/hero_honduran_cafe_1793908265168.jpg"
             alt="Café de Honduras"
             className="w-full h-full object-cover"
           />
@@ -103,7 +102,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
         </div>
       </section>
 
-      {/* Directorio de Negocios en Demostración */}
+      {/* Directorio de Negocios Disponibles */}
       <section id="cafeterias-list" className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-stone-200 pb-4">
           <div>
@@ -115,12 +114,42 @@ export const LandingView: React.FC<LandingViewProps> = ({
             </p>
           </div>
           <span className="text-xs font-semibold text-stone-500">
-            {activeBusinesses.length} locales activos en demostración
+            {activeBusinesses.length} locales disponibles
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {businesses.map((biz) => {
+        {businesses.length === 0 ? (
+          <div className="bg-white rounded-3xl border border-stone-200 p-10 sm:p-14 text-center space-y-4 shadow-xs">
+            <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-800 border border-amber-200 flex items-center justify-center mx-auto">
+              <Coffee className="w-7 h-7" />
+            </div>
+            <div className="max-w-md mx-auto space-y-1">
+              <h3 className="text-base font-bold text-stone-900 font-orlando">
+                Plataforma lista para nuevos negocios
+              </h3>
+              <p className="text-xs text-stone-500">
+                Actualmente no hay cafeterías abiertas al público. Los negocios dados de alta por el administrador aparecerán aquí con sus menús y pedidos para recoger.
+              </p>
+            </div>
+            {currentUser?.role === 'superadmin' ? (
+              <button
+                onClick={() => onNavigate('/superadmin')}
+                className="px-5 py-2.5 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-bold transition-colors inline-flex items-center gap-2 shadow-xs"
+              >
+                Ir al Panel de Superadmin
+              </button>
+            ) : (
+              <button
+                onClick={() => onNavigate('/superadmin/ingresar')}
+                className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-xl text-xs font-semibold transition-colors"
+              >
+                Acceso Administrador
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {businesses.map((biz) => {
             const isSuspended = biz.estado === 'suspendido';
             return (
               <div
@@ -201,11 +230,9 @@ export const LandingView: React.FC<LandingViewProps> = ({
                         <KeyRound className="w-3 h-3 text-amber-700 shrink-0" />
                         <span>Requiere PIN del local</span>
                       </div>
-                      {biz.pinAccesoMenu && (
-                        <span className="text-stone-400 font-mono text-[10px]">
-                          Demo: {biz.pinAccesoMenu}
-                        </span>
-                      )}
+                      <span className="text-stone-400 text-[10px]">
+                        Acceso clientes
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -228,63 +255,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
             );
           })}
         </div>
-      </section>
-
-      {/* Sección Informativa: Roles y acceso */}
-      <section className="bg-stone-100 rounded-3xl p-8 border border-stone-200 space-y-6">
-        <h3 className="text-lg font-bold text-stone-900">
-          ¿Cómo probar los tres roles en esta demostración?
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-stone-700">
-          <div className="bg-white p-5 rounded-2xl border border-stone-200/80 space-y-2">
-            <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider">
-              1. Rol Cliente
-            </span>
-            <p className="font-semibold text-stone-900 text-sm">Carlos Mejía</p>
-            <p>
-              Prueba registrar pedidos para recoger, revisar tu carrito, pagar en efectivo o usar tu saldo a fin de mes habilitado en Café Copán.
-            </p>
-            <button
-              onClick={() => onNavigate('/cliente/ingresar')}
-              className="text-amber-800 font-bold hover:underline inline-flex items-center gap-1 pt-1"
-            >
-              Ingresar como cliente <ArrowRight className="w-3 h-3" />
-            </button>
-          </div>
-
-          <div className="bg-white p-5 rounded-2xl border border-stone-200/80 space-y-2">
-            <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">
-              2. Rol Dueño de Negocio
-            </span>
-            <p className="font-semibold text-stone-900 text-sm">Doña Elena Romero</p>
-            <p>
-              Administra el menú, cambia el estado de pedidos en preparación o listos, genera e imprime el código QR y gestiona el crédito de clientes.
-            </p>
-            <button
-              onClick={() => onNavigate('/dueno/ingresar')}
-              className="text-emerald-800 font-bold hover:underline inline-flex items-center gap-1 pt-1"
-            >
-              Ingresar al panel de dueño <ArrowRight className="w-3 h-3" />
-            </button>
-          </div>
-
-          <div className="bg-white p-5 rounded-2xl border border-stone-200/80 space-y-2">
-            <span className="text-[11px] font-bold text-stone-800 uppercase tracking-wider">
-              3. Superadministrador
-            </span>
-            <p className="font-semibold text-stone-900 text-sm">Lic. Roberto Paz</p>
-            <p>
-              Bandeja global de soporte, auditoría de acciones administrativas y supervisión de todas las cafeterías (suspender/reactivar).
-            </p>
-            <button
-              onClick={() => onNavigate('/superadmin/ingresar')}
-              className="text-stone-900 font-bold hover:underline inline-flex items-center gap-1 pt-1"
-            >
-              Ingresar a superadmin <ArrowRight className="w-3 h-3" />
-            </button>
-          </div>
-        </div>
+        )}
       </section>
     </div>
   );

@@ -69,10 +69,6 @@ import {
 import { QRCodeDisplay } from '../components/QRCodeDisplay';
 import { UserAvatar } from '../components/UserAvatar';
 import { AvatarModal } from '../components/AvatarModal';
-import baleadaEspecial from '../assets/images/baleada_especial_1793908264377.jpg';
-import desayunoTipico from '../assets/images/desayuno_tipico_hn_1793908266298.jpg';
-import polloChuco from '../assets/images/pollo_chuco_honduras_1793909291520.jpg';
-import cafePourover from '../assets/images/cafe_pourover_honduras_1793909290813.jpg';
 
 interface OwnerPortalViewProps {
   currentUser: User;
@@ -141,10 +137,10 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
   const menuFileInputRef = useRef<HTMLInputElement>(null);
 
   const PRESET_FOOD_PHOTOS = [
-    { label: 'Baleada Especial', url: baleadaEspecial },
-    { label: 'Desayuno Típico', url: desayunoTipico },
-    { label: 'Pollo Chuco', url: polloChuco },
-    { label: 'Café Pour-Over', url: cafePourover },
+    { label: 'Baleada Especial', url: '/src/assets/images/baleada_especial_1793908264377.jpg' },
+    { label: 'Desayuno Típico', url: '/src/assets/images/desayuno_tipico_hn_1793908266298.jpg' },
+    { label: 'Pollo Chuco', url: '/src/assets/images/pollo_chuco_honduras_1793909291520.jpg' },
+    { label: 'Café Pour-Over', url: '/src/assets/images/cafe_pourover_honduras_1793909290813.jpg' },
   ];
 
   // Categorías personalizadas del negocio
@@ -1947,13 +1943,20 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
         </div>
       )}
 
-      {/* Modal Foto de Perfil */}
+      {/* Modal de Perfil y Foto */}
       <AvatarModal
         user={currentUser}
         isOpen={showAvatarModal}
         onClose={() => setShowAvatarModal(false)}
-        onAvatarUpdated={(newAvatar) => {
-          onUserUpdated({ ...currentUser, avatarUrl: newAvatar });
+        onAvatarUpdated={(newAvatar, newName) => {
+          onUserUpdated({
+            ...currentUser,
+            avatarUrl: newAvatar,
+            nombre: newName || currentUser.nombre,
+          });
+        }}
+        onUserUpdated={(updatedUser) => {
+          onUserUpdated(updatedUser);
         }}
       />
     </div>

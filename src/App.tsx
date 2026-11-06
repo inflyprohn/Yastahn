@@ -10,7 +10,6 @@ import {
 import { TopBar } from './components/TopBar';
 import { Sidebar } from './components/Sidebar';
 import { AvatarModal } from './components/AvatarModal';
-import { DemoBanner } from './components/DemoBanner';
 import { LandingView } from './views/LandingView';
 import { PublicCafeMenu } from './views/PublicCafeMenu';
 import { ClientPortalView } from './views/ClientPortalView';
@@ -20,21 +19,6 @@ import { SupportView } from './views/SupportView';
 import { ClientAuthView } from './views/ClientAuthView';
 import { OwnerAuthView } from './views/OwnerAuthView';
 import { SuperadminAuthView } from './views/SuperadminAuthView';
-
-const APP_BASE_PATH = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-
-function getAppRoute(pathname: string): string {
-  const route = APP_BASE_PATH && pathname.startsWith(APP_BASE_PATH)
-    ? pathname.slice(APP_BASE_PATH.length)
-    : pathname;
-  return route || '/';
-}
-
-function getBrowserPath(route: string): string {
-  const normalizedRoute = route.startsWith('/') ? route : `/${route}`;
-  if (!APP_BASE_PATH) return normalizedRoute;
-  return normalizedRoute === '/' ? `${APP_BASE_PATH}/` : `${APP_BASE_PATH}${normalizedRoute}`;
-}
 
 export default function App() {
   const [currentUser, setUserState] = useState<User | null>(null);
@@ -51,26 +35,15 @@ export default function App() {
     const user = getCurrentUser();
     setUserState(user);
 
-    // Parsear ruta inicial, quitando la base del repositorio en GitHub Pages.
-    const syncRouteFromLocation = () => {
-      const path = getAppRoute(window.location.pathname);
-      if (path.startsWith('/c/')) {
-        const slug = path.replace('/c/', '').split('/')[0];
-        setSelectedCafeSlug(slug);
-        setOriginCafeSlug(slug);
-        setCurrentRoute(`/c/${slug}`);
-      } else {
-        setSelectedCafeSlug(null);
-        setCurrentRoute(path);
-      }
-    };
-
-    syncRouteFromLocation();
-    window.addEventListener('popstate', syncRouteFromLocation);
-
-    return () => {
-      window.removeEventListener('popstate', syncRouteFromLocation);
-    };
+    // Parsear ruta inicial si existe
+    const path = window.location.pathname;
+    if (path.startsWith('/c/')) {
+      const slug = path.replace('/c/', '').split('/')[0];
+      setSelectedCafeSlug(slug);
+      setCurrentRoute(`/c/${slug}`);
+    } else if (path !== '/' && path !== '') {
+      setCurrentRoute(path);
+    }
   }, []);
 
   const navigateTo = (route: string) => {
@@ -78,11 +51,10 @@ export default function App() {
     if (route.startsWith('/c/')) {
       const slug = route.replace('/c/', '').split('/')[0];
       setSelectedCafeSlug(slug);
-      setOriginCafeSlug(slug);
-      window.history.pushState({}, '', getBrowserPath(route));
+      window.history.pushState({}, '', route);
     } else {
       setSelectedCafeSlug(null);
-      window.history.pushState({}, '', getBrowserPath(route));
+      window.history.pushState({}, '', route);
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -318,13 +290,6 @@ export default function App() {
           isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'
         }`}
       >
-        {/* Barra superior de demostración y cambio rápido de rol */}
-        <DemoBanner
-          currentUser={currentUser}
-          onUserChanged={handleUserChanged}
-          onNavigate={navigateTo}
-        />
-
         {/* Cabecera / TopBar integrado */}
         <TopBar
           currentUser={currentUser}
@@ -355,14 +320,21 @@ export default function App() {
         </footer>
       </div>
 
-      {/* Modal global de edición de foto de perfil */}
+      {/* Modal global de edición de perfil y foto */}
       {currentUser && (
         <AvatarModal
           user={currentUser}
           isOpen={showGlobalAvatarModal}
           onClose={() => setShowGlobalAvatarModal(false)}
-          onAvatarUpdated={(newAvatarUrl) => {
-            handleUserChanged({ ...currentUser, avatarUrl: newAvatarUrl });
+          onAvatarUpdated={(newAvatarUrl, newName) => {
+            handleUserChanged({
+              ...currentUser,
+              avatarUrl: newAvatarUrl,
+              nombre: newName || currentUser.nombre,
+            });
+          }}
+          onUserUpdated={(updatedUser) => {
+            handleUserChanged(updatedUser);
           }}
         />
       )}
