@@ -119,7 +119,7 @@ export const OwnerAuthView: React.FC<OwnerAuthViewProps> = ({
       }
 
       onSuccess(result.user);
-      onNavigate('/dueno');
+      onNavigate('/dueno/pedidos');
       return;
     }
 
@@ -153,7 +153,7 @@ export const OwnerAuthView: React.FC<OwnerAuthViewProps> = ({
     }
 
     onSuccess(result.user);
-    onNavigate('/dueno');
+    onNavigate('/dueno/pedidos');
   };
 
   const isRegistering = mode === 'registro';
