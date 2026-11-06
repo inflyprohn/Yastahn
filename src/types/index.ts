@@ -17,6 +17,7 @@ export interface Business {
   id: string;
   slug: string;
   nombre: string;
+  tipoNegocio?: string;
   logoUrl: string;
   bannerUrl: string;
   descripcion: string;
