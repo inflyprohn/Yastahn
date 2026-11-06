@@ -24,7 +24,7 @@ export const DemoBanner: React.FC<DemoBannerProps> = ({
       onUserChanged(target);
       // Navegación contextual conveniente
       if (target.role === 'cliente') onNavigate('/cliente');
-      else if (target.role === 'dueno') onNavigate('/dueno');
+      else if (target.role === 'dueno') onNavigate('/dueno/pedidos');
       else if (target.role === 'superadmin') onNavigate('/superadmin');
     }
   };
