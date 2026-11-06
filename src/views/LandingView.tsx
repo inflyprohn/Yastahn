@@ -153,19 +153,12 @@ export const LandingView: React.FC<LandingViewProps> = ({
                 Actualmente no hay cafeterías abiertas al público. Los negocios dados de alta por el administrador aparecerán aquí con sus menús y pedidos para recoger.
               </p>
             </div>
-            {currentUser?.role === 'superadmin' ? (
+            {currentUser?.role === 'superadmin' && (
               <button
                 onClick={() => onNavigate('/superadmin')}
                 className="px-5 py-2.5 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-bold transition-colors inline-flex items-center gap-2 shadow-xs"
               >
                 Ir al Panel de Superadmin
-              </button>
-            ) : (
-              <button
-                onClick={() => onNavigate('/superadmin/ingresar')}
-                className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-xl text-xs font-semibold transition-colors"
-              >
-                Acceso Administrador
               </button>
             )}
           </div>
