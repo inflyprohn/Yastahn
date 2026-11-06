@@ -36,7 +36,11 @@ export const TopBar: React.FC<TopBarProps> = ({
     if (currentRoute === '/') return 'Cafeterías y Comedores';
     if (currentRoute.startsWith('/c/')) return 'Menú de Cafetería';
     if (currentRoute === '/cliente') return 'Mis Pedidos y Saldos';
-    if (currentRoute === '/dueno' || (currentRoute.startsWith('/dueno/') && !currentRoute.includes('ingresar') && !currentRoute.includes('registro'))) return 'Panel de Gestión Comercial';
+    if (currentRoute === '/dueno/pedidos' || currentRoute === '/dueno') return 'Pedidos en Vivo';
+    if (currentRoute === '/dueno/menu') return 'Menú y Platillos';
+    if (currentRoute === '/dueno/cuentas') return 'Clientes y Fin de Mes';
+    if (currentRoute === '/dueno/qr') return 'Código QR del Negocio';
+    if (currentRoute.startsWith('/dueno/') && !currentRoute.includes('ingresar') && !currentRoute.includes('registro')) return 'Panel de Gestión Comercial';
     if (currentRoute === '/superadmin') return 'Superadministración de Plataforma';
     if (currentRoute === '/soporte') return 'Centro de Soporte y Casos';
     if (currentRoute.includes('ingresar')) return 'Iniciar Sesión';
@@ -135,7 +139,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                       <button
                         onClick={() => {
                           setShowUserDropdown(false);
-                          onNavigate('/dueno');
+                          onNavigate('/dueno/pedidos');
                         }}
                         className="w-full px-4 py-2 text-left text-xs text-stone-700 hover:bg-stone-50 flex items-center gap-2 transition-colors"
                       >
