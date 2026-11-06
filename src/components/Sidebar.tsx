@@ -66,15 +66,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: currentUser?.role === 'dueno' ? 'Gestión de Pedidos' : 'Mis Pedidos',
       shortLabel: 'Pedidos',
       icon: ShoppingBag,
-      route:
+            route:
         currentUser?.role === 'dueno'
-          ? '/dueno'
+          ? '/dueno/pedidos'
           : currentUser?.role === 'cliente'
-          ? '/cliente'
-          : '/cliente/ingresar',
+            ? '/cliente'
+            : '/cliente/ingresar',
       isActive:
-        currentRoute === '/cliente' ||
-        (currentRoute === '/dueno' && currentUser?.role === 'dueno'),
+        (currentUser?.role === 'dueno' &&
+          ['/dueno', '/dueno/pedidos', '/dueno/menu', '/dueno/qr'].includes(currentRoute)) ||
+        (currentUser?.role === 'cliente' && currentRoute === '/cliente'),
       description: 'Estado de preparación en barra',
     },
     {
@@ -86,18 +87,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
           ? 'Auditoría Global'
           : 'Saldos a Fin de Mes',
       shortLabel: 'Cuentas',
-      icon: Receipt,
-      route:
+            route:
         currentUser?.role === 'dueno'
-          ? '/dueno'
+          ? '/dueno/cuentas'
           : currentUser?.role === 'superadmin'
-          ? '/superadmin'
-          : currentUser?.role === 'cliente'
-          ? '/cliente'
-          : '/cliente/ingresar',
+            ? '/superadmin'
+            : currentUser?.role === 'cliente'
+              ? '/cliente'
+              : '/cliente/ingresar',
       isActive:
         (currentRoute === '/cliente' && currentUser?.role === 'cliente') ||
-        (currentRoute === '/dueno' && currentUser?.role === 'dueno') ||
+        (currentRoute === '/dueno/cuentas' && currentUser?.role === 'dueno') ||
+        (currentRoute === '/superadmin' && currentUser?.role === 'superadmin'),
         (currentRoute === '/superadmin' && currentUser?.role === 'superadmin'),
       description: 'Libro contable y abonos',
     },
