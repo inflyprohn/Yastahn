@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Store, Lock, Mail, ShieldAlert, Check } from 'lucide-react';
 import { User } from '../types';
 import { loginDueno } from '../services/storage';
+import { SecretVisibilityToggle } from '../components/SecretVisibilityToggle';
 
 interface OwnerAuthViewProps {
   onSuccess: (user: User) => void;
@@ -14,6 +15,7 @@ export const OwnerAuthView: React.FC<OwnerAuthViewProps> = ({
 }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -76,12 +78,17 @@ export const OwnerAuthView: React.FC<OwnerAuthViewProps> = ({
             <div className="relative">
               <Lock className="w-4 h-4 text-stone-400 absolute left-3 top-3" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-stone-50 border border-stone-200 rounded-xl pl-9 pr-3 py-2.5 text-xs text-stone-900 focus:outline-none focus:ring-1 focus:ring-amber-600"
+                className="w-full bg-stone-50 border border-stone-200 rounded-xl pl-9 pr-11 py-2.5 text-xs text-stone-900 focus:outline-none focus:ring-1 focus:ring-amber-600"
+              />
+              <SecretVisibilityToggle
+                visible={showPassword}
+                onToggle={() => setShowPassword((visible) => !visible)}
+                label="la contraseña"
               />
             </div>
           </div>
