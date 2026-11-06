@@ -24,6 +24,7 @@ import {
   UtensilsCrossed,
 } from 'lucide-react';
 import { Business, MenuItem, OrderItemSnapshot, PaymentMethod, User } from '../types';
+import { SecretVisibilityToggle } from '../components/SecretVisibilityToggle';
 import { formatHNL, formatHondurasPhone, isValidHondurasPhone, isValidPIN } from '../utils/formatters';
 import {
   createOrder,
@@ -72,6 +73,7 @@ export const PublicCafeMenu: React.FC<PublicCafeMenuProps> = ({
   const [authNombre, setAuthNombre] = useState('');
   const [authCelular, setAuthCelular] = useState('');
   const [authPin, setAuthPin] = useState('');
+  const [showAuthPin, setShowAuthPin] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
   // Estado de desbloqueo con PIN de fidelidad del local
@@ -86,6 +88,7 @@ export const PublicCafeMenu: React.FC<PublicCafeMenuProps> = ({
     }
   });
   const [menuPinInput, setMenuPinInput] = useState('');
+  const [showMenuPin, setShowMenuPin] = useState(false);
   const [menuPinError, setMenuPinError] = useState<string | null>(null);
 
   const handleUnlockMenu = (pinToTest?: string) => {
@@ -409,13 +412,13 @@ export const PublicCafeMenu: React.FC<PublicCafeMenuProps> = ({
             }}
             className="space-y-4 max-w-xs mx-auto"
           >
-            <div>
+            <div className="relative">
               <label htmlFor="menu-pin-input" className="sr-only">
                 PIN de acceso de 4 dígitos
               </label>
               <input
                 id="menu-pin-input"
-                type="password"
+                type={showMenuPin ? 'text' : 'password'}
                 maxLength={4}
                 pattern="[0-9]*"
                 inputMode="numeric"
@@ -427,7 +430,12 @@ export const PublicCafeMenu: React.FC<PublicCafeMenuProps> = ({
                   setMenuPinInput(val);
                   setMenuPinError(null);
                 }}
-                className="w-full text-center tracking-[0.5em] text-2xl font-mono font-black py-3.5 px-4 rounded-2xl border-2 border-stone-200 focus:border-amber-600 focus:ring-2 focus:ring-amber-200 focus:outline-hidden transition-all bg-stone-50/50"
+                className="w-full text-center tracking-[0.5em] text-2xl font-mono font-black py-3.5 pl-4 pr-12 rounded-2xl border-2 border-stone-200 focus:border-amber-600 focus:ring-2 focus:ring-amber-200 focus:outline-hidden transition-all bg-stone-50/50"
+              />
+              <SecretVisibilityToggle
+                visible={showMenuPin}
+                onToggle={() => setShowMenuPin((visible) => !visible)}
+                label="el PIN del menú"
               />
             </div>
 
@@ -940,15 +948,22 @@ export const PublicCafeMenu: React.FC<PublicCafeMenuProps> = ({
                 <label className="block text-xs font-semibold text-stone-700 mb-1">
                   PIN de 4 dígitos
                 </label>
-                <input
-                  type="password"
-                  maxLength={4}
-                  required
-                  placeholder="••••"
-                  value={authPin}
-                  onChange={(e) => setAuthPin(e.target.value)}
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs font-mono text-stone-900 tracking-widest text-center focus:outline-none focus:ring-1 focus:ring-amber-600"
-                />
+                <div className="relative">
+                  <input
+                    type={showAuthPin ? 'text' : 'password'}
+                    maxLength={4}
+                    required
+                    placeholder="••••"
+                    value={authPin}
+                    onChange={(e) => setAuthPin(e.target.value)}
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl pl-3 pr-11 py-2 text-xs font-mono text-stone-900 tracking-widest text-center focus:outline-none focus:ring-1 focus:ring-amber-600"
+                  />
+                  <SecretVisibilityToggle
+                    visible={showAuthPin}
+                    onToggle={() => setShowAuthPin((visible) => !visible)}
+                    label="el PIN"
+                  />
+                </div>
                 <p className="text-[10px] text-stone-500 mt-1">
                   Ingresa tu código PIN personal de 4 dígitos
                 </p>
