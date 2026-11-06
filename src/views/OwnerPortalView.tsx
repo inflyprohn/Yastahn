@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   Store,
   QrCode,
@@ -68,7 +68,6 @@ import {
 } from '../services/storage';
 import { QRCodeDisplay } from '../components/QRCodeDisplay';
 import { UserAvatar } from '../components/UserAvatar';
-import { AvatarModal } from '../components/AvatarModal';
 import baleadaEspecial from '../assets/images/baleada_especial_1793908264377.jpg';
 import desayunoTipico from '../assets/images/desayuno_tipico_hn_1793908266298.jpg';
 import polloChuco from '../assets/images/pollo_chuco_honduras_1793909291520.jpg';
@@ -76,16 +75,16 @@ import cafePourover from '../assets/images/cafe_pourover_honduras_1793909290813.
 
 interface OwnerPortalViewProps {
   currentUser: User;
+  currentRoute: string;
   onNavigate: (route: string) => void;
   onSelectCafe: (slug: string) => void;
-  onUserUpdated: (user: User) => void;
 }
 
 export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
   currentUser,
+  currentRoute,
   onNavigate,
   onSelectCafe,
-  onUserUpdated,
 }) => {
   // Negocios que posee este dueño (soporta multi-negocio)
   const ownedBusinesses = useMemo(() => {
@@ -101,7 +100,17 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
     'pedidos' | 'menu' | 'clientes' | 'qr' | 'perfil'
   >('pedidos');
 
-  const [showAvatarModal, setShowAvatarModal] = useState(false);
+  useEffect(() => {
+    const tabByRoute: Record<string, 'pedidos' | 'menu' | 'clientes' | 'qr'> = {
+      '/dueno/pedidos': 'pedidos',
+      '/dueno/menu': 'menu',
+      '/dueno/cuentas': 'clientes',
+      '/dueno/qr': 'qr',
+    };
+
+    setActiveTab(tabByRoute[currentRoute] || 'pedidos');
+  }, [currentRoute]);
+
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
   // Pedidos del negocio seleccionado
@@ -591,13 +600,6 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
               role="dueno"
               size="xl"
             />
-            <button
-              onClick={() => setShowAvatarModal(true)}
-              className="absolute bottom-0 right-0 p-1.5 bg-stone-900 text-white rounded-full shadow-md hover:bg-stone-800 transition-colors"
-              title="Cambiar foto de perfil del dueño"
-            >
-              <Camera className="w-3.5 h-3.5" />
-            </button>
           </div>
 
           <div>
@@ -654,7 +656,7 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
       {/* Barra de Pestañas del Panel de Dueño */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-stone-200 scrollbar-none">
         <button
-          onClick={() => setActiveTab('pedidos')}
+          onClick={() => onNavigate('/dueno/pedidos')}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold font-orlando tracking-wide whitespace-nowrap shrink-0 transition-colors ${
             activeTab === 'pedidos'
               ? 'bg-stone-900 text-white shadow-xs'
@@ -665,7 +667,7 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
         </button>
 
         <button
-          onClick={() => setActiveTab('menu')}
+          onClick={() => onNavigate('/dueno/menu')}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold font-orlando tracking-wide whitespace-nowrap shrink-0 transition-colors ${
             activeTab === 'menu'
               ? 'bg-stone-900 text-white shadow-xs'
@@ -676,7 +678,7 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
         </button>
 
         <button
-          onClick={() => setActiveTab('clientes')}
+          onClick={() => onNavigate('/dueno/cuentas')}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold font-orlando tracking-wide whitespace-nowrap shrink-0 transition-colors ${
             activeTab === 'clientes'
               ? 'bg-stone-900 text-white shadow-xs'
@@ -687,7 +689,7 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
         </button>
 
         <button
-          onClick={() => setActiveTab('qr')}
+          onClick={() => onNavigate('/dueno/qr')}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold font-orlando tracking-wide whitespace-nowrap shrink-0 transition-colors ${
             activeTab === 'qr'
               ? 'bg-stone-900 text-white shadow-xs'
@@ -1947,22 +1949,6 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
         </div>
       )}
 
-      {/* Modal de Perfil y Foto */}
-      <AvatarModal
-        user={currentUser}
-        isOpen={showAvatarModal}
-        onClose={() => setShowAvatarModal(false)}
-        onAvatarUpdated={(newAvatar, newName) => {
-          onUserUpdated({
-            ...currentUser,
-            avatarUrl: newAvatar,
-            nombre: newName || currentUser.nombre,
-          });
-        }}
-        onUserUpdated={(updatedUser) => {
-          onUserUpdated(updatedUser);
-        }}
-      />
     </div>
   );
 };
