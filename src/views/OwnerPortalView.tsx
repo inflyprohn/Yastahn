@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import {
   Store,
   QrCode,
@@ -76,14 +76,12 @@ import cafePourover from '../assets/images/cafe_pourover_honduras_1793909290813.
 interface OwnerPortalViewProps {
   currentUser: User;
   currentRoute: string;
-  onNavigate: (route: string) => void;
   onSelectCafe: (slug: string) => void;
 }
 
 export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
   currentUser,
   currentRoute,
-  onNavigate,
   onSelectCafe,
 }) => {
   // Negocios que posee este dueño (soporta multi-negocio)
@@ -96,20 +94,14 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
   );
   const currentBiz = ownedBusinesses.find((b) => b.id === selectedBizId) || ownedBusinesses[0];
 
-  const [activeTab, setActiveTab] = useState<
-    'pedidos' | 'menu' | 'clientes' | 'qr' | 'perfil'
-  >('pedidos');
-
-  useEffect(() => {
-    const tabByRoute: Record<string, 'pedidos' | 'menu' | 'clientes' | 'qr'> = {
-      '/dueno/pedidos': 'pedidos',
-      '/dueno/menu': 'menu',
-      '/dueno/cuentas': 'clientes',
-      '/dueno/qr': 'qr',
-    };
-
-    setActiveTab(tabByRoute[currentRoute] || 'pedidos');
-  }, [currentRoute]);
+  const sectionByRoute: Record<string, 'pedidos' | 'menu' | 'clientes' | 'qr'> = {
+    '/dueno': 'pedidos',
+    '/dueno/pedidos': 'pedidos',
+    '/dueno/menu': 'menu',
+    '/dueno/cuentas': 'clientes',
+    '/dueno/qr': 'qr',
+  };
+  const activeSection = sectionByRoute[currentRoute] || 'pedidos';
 
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
@@ -653,55 +645,8 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
         </div>
       </div>
 
-      {/* Barra de Pestañas del Panel de Dueño */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-stone-200 scrollbar-none">
-        <button
-          onClick={() => onNavigate('/dueno/pedidos')}
-          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold font-orlando tracking-wide whitespace-nowrap shrink-0 transition-colors ${
-            activeTab === 'pedidos'
-              ? 'bg-stone-900 text-white shadow-xs'
-              : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
-          }`}
-        >
-          Pedidos en Vivo ({orders.filter((o) => o.estadoPedido !== 'entregado').length})
-        </button>
-
-        <button
-          onClick={() => onNavigate('/dueno/menu')}
-          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold font-orlando tracking-wide whitespace-nowrap shrink-0 transition-colors ${
-            activeTab === 'menu'
-              ? 'bg-stone-900 text-white shadow-xs'
-              : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
-          }`}
-        >
-          Menú y Platillos ({menuItems.length})
-        </button>
-
-        <button
-          onClick={() => onNavigate('/dueno/cuentas')}
-          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold font-orlando tracking-wide whitespace-nowrap shrink-0 transition-colors ${
-            activeTab === 'clientes'
-              ? 'bg-stone-900 text-white shadow-xs'
-              : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
-          }`}
-        >
-          Clientes y Fin de Mes ({clientsWithAccounts.length})
-        </button>
-
-        <button
-          onClick={() => onNavigate('/dueno/qr')}
-          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold font-orlando tracking-wide whitespace-nowrap shrink-0 transition-colors ${
-            activeTab === 'qr'
-              ? 'bg-stone-900 text-white shadow-xs'
-              : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
-          }`}
-        >
-          Mi negocio → Código QR
-        </button>
-      </div>
-
-      {/* ================= PESTAÑA: PEDIDOS EN VIVO ================= */}
-      {activeTab === 'pedidos' && (
+      {/* ================= PÁGINA: PEDIDOS EN VIVO ================= */}
+      {activeSection === 'pedidos' && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-stone-900">
@@ -906,8 +851,8 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
         </div>
       )}
 
-      {/* ================= PESTAÑA: MENÚ Y PLATILLOS ================= */}
-      {activeTab === 'menu' && (
+      {/* ================= PÁGINA: MENÚ Y PLATILLOS ================= */}
+      {activeSection === 'menu' && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -1074,8 +1019,8 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
         </div>
       )}
 
-      {/* ================= PESTAÑA: CLIENTES Y FIN DE MES ================= */}
-      {activeTab === 'clientes' && (
+      {/* ================= PÁGINA: CLIENTES Y FIN DE MES ================= */}
+      {activeSection === 'clientes' && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
@@ -1215,8 +1160,8 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
         </div>
       )}
 
-      {/* ================= PESTAÑA: CÓDIGO QR ================= */}
-      {activeTab === 'qr' && (
+      {/* ================= PÁGINA: CÓDIGO QR ================= */}
+      {activeSection === 'qr' && (
         <QRCodeDisplay
           business={currentBiz}
           onNavigateToPublicMenu={() => onSelectCafe(currentBiz.slug)}
