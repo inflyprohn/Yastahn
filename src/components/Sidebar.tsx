@@ -148,14 +148,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onCloseMobile();
             }}
             title={item.label}
-            className={`w-full flex items-center gap-3.5 px-3.5 py-3 rounded-2xl text-left transition-all group relative ${
+            className={`w-full flex items-center gap-3.5 px-3.5 py-3 rounded-2xl text-left transition-all group relative ${isCollapsed ? 'lg:justify-center lg:px-0' : ''} ${
               active
                 ? 'bg-amber-800 text-white shadow-sm font-bold'
                 : 'text-stone-700 hover:text-stone-900 hover:bg-stone-200/70 font-semibold'
             }`}
           >
             <div
-              className={`p-2 rounded-xl shrink-0 transition-colors ${
+              className={`w-8 h-8 flex items-center justify-center p-0 rounded-xl shrink-0 transition-colors ${
                 active
                   ? 'bg-amber-700 text-white'
                   : 'bg-stone-200/80 text-stone-700 group-hover:bg-amber-100 group-hover:text-amber-900'
@@ -211,13 +211,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
         }`}
       >
         {/* Parte Superior: Marca y Toggle */}
-        <div className={`p-4 border-b border-stone-200 flex items-center justify-between gap-2 ${isCollapsed ? 'lg:px-0' : ''}`}>
+        <div className={`relative p-4 border-b border-stone-200 flex items-center justify-between gap-2 ${isCollapsed ? 'lg:px-0' : ''}`}>
           <button
             onClick={() => {
               onNavigate('/');
               onCloseMobile();
             }}
-            className="flex items-center gap-3 text-left focus:outline-none group overflow-hidden"
+            className={`flex items-center gap-3 text-left focus:outline-none group overflow-hidden ${isCollapsed ? 'lg:absolute lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2' : ''}`}
           >
             <div className="w-10 h-10 rounded-2xl bg-amber-800 text-white flex items-center justify-center shrink-0 shadow-xs group-hover:bg-amber-900 transition-colors">
               <Coffee className="w-5 h-5 text-amber-100" />
