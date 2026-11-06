@@ -1,5 +1,5 @@
 import React from 'react';
-import { Coffee, ArrowRight, QrCode, ShoppingBag, Shield, Clock, MapPin, Phone, CheckCircle2, KeyRound } from 'lucide-react';
+import { Coffee, ArrowRight, QrCode, ShoppingBag, Shield, Clock, MapPin, Phone, KeyRound, Store, UserRound } from 'lucide-react';
 import { Business, User } from '../types';
 import { getBusinesses } from '../services/storage';
 import heroHonduranCafe from '../assets/images/hero_honduran_cafe_1793908265168.jpg';
@@ -46,25 +46,46 @@ export const LandingView: React.FC<LandingViewProps> = ({
             Plataforma para cafeterías, comedores y negocios de comida en Honduras. Consulta el menú, haz tu pedido para recoger en barra y lleva el control de pagos o saldo a fin de mes.
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <div className="flex flex-col items-center justify-center gap-4 pt-2">
             <button
               onClick={() => {
                 const el = document.getElementById('cafeterias-list');
                 el?.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="px-6 py-3.5 bg-amber-600 hover:bg-amber-500 text-white font-bold text-sm rounded-xl transition-colors shadow-lg shadow-amber-900/30 flex items-center gap-2"
+              className="w-full sm:w-auto px-6 py-3.5 bg-amber-600 hover:bg-amber-500 text-white font-bold text-sm rounded-xl transition-colors shadow-lg shadow-amber-900/30 flex items-center justify-center gap-2"
             >
               <ShoppingBag className="w-4 h-4" />
               Explorar negocios y ordenar
             </button>
 
             {!currentUser && (
-              <button
-                onClick={() => onNavigate('/dueno/ingresar')}
-                className="px-6 py-3.5 bg-stone-800/80 hover:bg-stone-800 text-stone-100 font-bold text-sm rounded-xl border border-stone-700 transition-colors"
-              >
-                Registrar o entrar como dueño
-              </button>
+              <div className="grid w-full max-w-2xl grid-cols-1 gap-3 sm:grid-cols-2">
+                <button
+                  onClick={() => onNavigate('/cliente/ingresar')}
+                  className="flex min-h-16 items-center gap-3 rounded-xl border border-white/20 bg-white px-4 py-3 text-left text-stone-900 shadow-lg transition-colors hover:bg-stone-100"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-900">
+                    <UserRound className="h-5 w-5" />
+                  </span>
+                  <span>
+                    <span className="block text-sm font-bold">Ingresar como cliente</span>
+                    <span className="mt-0.5 block text-xs text-stone-600">Pedidos, saldos e historial</span>
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => onNavigate('/dueno/ingresar')}
+                  className="flex min-h-16 items-center gap-3 rounded-xl border border-stone-600 bg-stone-800/90 px-4 py-3 text-left text-white shadow-lg transition-colors hover:bg-stone-700"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-300">
+                    <Store className="h-5 w-5" />
+                  </span>
+                  <span>
+                    <span className="block text-sm font-bold leading-tight">Acceso para cafetería o comedor</span>
+                    <span className="mt-0.5 block text-xs text-stone-300">Menú, pedidos y cobros</span>
+                  </span>
+                </button>
+              </div>
             )}
           </div>
         </div>
