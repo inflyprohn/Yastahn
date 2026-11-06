@@ -211,7 +211,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         }`}
       >
         {/* Parte Superior: Marca y Toggle */}
-        <div className="p-4 border-b border-stone-200 flex items-center justify-between gap-2">
+        <div className={`p-4 border-b border-stone-200 flex items-center justify-between gap-2 ${isCollapsed ? 'lg:px-0' : ''}`}>
           <button
             onClick={() => {
               onNavigate('/');
