@@ -8,26 +8,19 @@ import {
   Shield,
   ChevronLeft,
   ChevronRight,
-  User as UserIcon,
-  LogOut,
-  Camera,
   CheckCircle2,
   Clock,
   Settings,
   Sparkles,
 } from 'lucide-react';
 import { User } from '../types';
-import { UserAvatar } from './UserAvatar';
-import { setCurrentUser } from '../services/storage';
 
 interface SidebarProps {
   currentUser: User | null;
   currentRoute: string;
   onNavigate: (route: string) => void;
-  onUserChanged: (user: User | null) => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
-  onOpenAvatarModal: () => void;
   mobileOpen: boolean;
   onCloseMobile: () => void;
 }
@@ -36,20 +29,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   currentUser,
   currentRoute,
   onNavigate,
-  onUserChanged,
   isCollapsed,
   onToggleCollapse,
-  onOpenAvatarModal,
   mobileOpen,
   onCloseMobile,
 }) => {
-  const handleLogout = () => {
-    setCurrentUser(null);
-    onUserChanged(null);
-    onNavigate('/');
-    onCloseMobile();
-  };
-
   // Definir elementos de navegación contextuales
   const navItems = [
     {
@@ -79,7 +63,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       description: 'Estado de preparación en barra',
     },
     {
-          {
       id: 'cuentas',
       label:
         currentUser?.role === 'dueno'
@@ -259,64 +242,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {renderNavButtons()}
         </div>
 
-        {/* Zona Inferior: Perfil solo cuando hay una sesión activa */}
-        {currentUser && (
-          <div className="p-3 border-t border-stone-200 bg-stone-50/80">
-            <div
-              className={`rounded-2xl border border-stone-200 bg-white p-3 shadow-xs space-y-2 ${
-                isCollapsed ? 'text-center' : ''
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className="relative shrink-0">
-                  <UserAvatar
-                    nombre={currentUser.nombre}
-                    avatarUrl={currentUser.avatarUrl}
-                    role={currentUser.role}
-                    size={isCollapsed ? 'sm' : 'md'}
-                  />
-                  <button
-                    onClick={onOpenAvatarModal}
-                    title="Cambiar foto de perfil"
-                    className="absolute -bottom-1 -right-1 p-1 bg-stone-900 text-white rounded-full shadow-xs hover:bg-amber-800 transition-colors"
-                  >
-                    <Camera className="w-2.5 h-2.5" />
-                  </button>
-                </div>
-
-                {!isCollapsed && (
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-stone-900 truncate">
-                      {currentUser.nombre}
-                    </p>
-                    <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/60 capitalize">
-                      {currentUser.role}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {!isCollapsed && (
-                <div className="pt-2 border-t border-stone-100 flex items-center justify-between text-xs">
-                  <button
-                    onClick={onOpenAvatarModal}
-                    className="text-[11px] font-semibold text-stone-600 hover:text-stone-900"
-                  >
-                    Editar foto
-                  </button>
-
-                  <button
-                    onClick={handleLogout}
-                    className="text-[11px] font-bold text-rose-600 hover:text-rose-800 flex items-center gap-1"
-                  >
-                    <LogOut className="w-3 h-3" />
-                    Salir
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </aside>
 
       {/* Barra de Navegación Inferior Móvil (Mobile Bottom Bar amigable) */}
@@ -344,20 +269,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           );
         })}
 
-        {currentUser && (
-          <button
-            onClick={onOpenAvatarModal}
-            className="flex flex-col items-center justify-center py-1 px-2 rounded-xl text-stone-600"
-          >
-            <UserAvatar
-              nombre={currentUser.nombre}
-              avatarUrl={currentUser.avatarUrl}
-              role={currentUser.role}
-              size="sm"
-            />
-            <span className="text-[10px] mt-0.5 font-orlando">Perfil</span>
-          </button>
-        )}
       </nav>
     </>
   );
