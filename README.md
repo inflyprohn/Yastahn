@@ -1,6 +1,6 @@
 # Yasta — Menús, Pedidos y Cobros para Cafeterías en Honduras 🇭🇳
 
-**Yasta** es una aplicación web full-stack responsive (móvil, tableta y escritorio) diseñada para que cafeterías, comedores y negocios de comida preparada en Honduras gestionen menús, pedidos para recoger en barra, clientes, cobros en efectivo y transferencias, saldos acumulados de **"pago a fin de mes"**, códigos QR permanentes y soporte al cliente.
+**Yasta** es un prototipo web responsive (móvil, tableta y escritorio) para que cafeterías, comedores y negocios de comida preparada en Honduras prueben la gestión de menús, pedidos para recoger en barra, clientes, cobros en efectivo y transferencias, saldos acumulados de **"pago a fin de mes"**, códigos QR permanentes y soporte al cliente.
 
 > ⚠️ **Estado del prototipo:** Esta versión es un **prototipo funcional de demostración**. Utiliza autenticación simulada y almacenamiento local en el navegador (`localStorage`) con datos ficticios. **No está conectada a servicios externos reales** (ni bancos, ni pasarelas de pago, ni SMS, ni WhatsApp) y **no debe utilizarse con contraseñas, números de teléfono o información financiera real**.
 
@@ -101,7 +101,13 @@ Para acceder a ver el menú y ordenar en cada cafetería, el cliente debe ingres
 
 ---
 
-## 4. Configuración de Dominio Propio para Códigos QR
+## 4. GitHub Pages y enlaces QR
+
+El sitio de proyecto se publica en `https://inflyprohn.github.io/Yastahn/`. El workflow `.github/workflows/deploy.yml` instala dependencias con Bun, compila Vite y publica `dist` en GitHub Pages. En el repositorio, abre **Settings → Pages** y selecciona **GitHub Actions** como fuente.
+
+La compilación de GitHub Pages usa `VITE_BASE_PATH=/Yastahn/`, para que recursos, rutas internas y códigos QR incluyan la ruta del repositorio. La vista previa local mantiene la ruta base `/`.
+
+Para cambiar el dominio usado por los códigos QR, configura `VITE_PUBLIC_APP_URL` como el origen del sitio, sin agregar una ruta al final:
 
 Para que los códigos QR generados tengan un enlace definitivo con su propio dominio web (ej. `https://yasta.hn/c/cafe-copan`), configure la siguiente variable en su archivo `.env`:
 
@@ -109,7 +115,7 @@ Para que los códigos QR generados tengan un enlace definitivo con su propio dom
 VITE_PUBLIC_APP_URL="https://midominio.com"
 ```
 
-Si no se define esta variable, la aplicación utilizará automáticamente `window.location.origin` (la URL actual de la vista previa).
+Si no se define esta variable, la aplicación utiliza el origen actual. Si publicas bajo un dominio propio en la raíz, configura también `VITE_BASE_PATH=/` en el workflow de GitHub Actions.
 
 ---
 
@@ -146,12 +152,14 @@ Para convertir este prototipo demostrativo en un sistema listo para producción 
 Para ejecutar el proyecto en su máquina local:
 
 ```bash
-# 1. Instalar dependencias
-npm install
+# 1. Instalar dependencias (el repositorio incluye bun.lock)
+bun install --frozen-lockfile
 
 # 2. Iniciar servidor de desarrollo en el puerto 3000
-npm run dev
+bun run dev
 
 # 3. Compilar para producción
-npm run build
+bun run build
 ```
+
+Las declaraciones CSS de Orlando y Grift están preparadas para `public/fonts/Orlando.woff2` y `public/fonts/Grift-Medium.ttf`. Esta descarga contiene el README de esa carpeta, pero no los archivos binarios. Agrega los archivos de fuente reales para que se apliquen; mientras tanto se muestran las fuentes de respaldo.

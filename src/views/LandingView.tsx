@@ -2,6 +2,7 @@ import React from 'react';
 import { Coffee, ArrowRight, QrCode, ShoppingBag, Shield, Clock, MapPin, Phone, CheckCircle2, KeyRound } from 'lucide-react';
 import { Business, User } from '../types';
 import { getBusinesses } from '../services/storage';
+import heroHonduranCafe from '../assets/images/hero_honduran_cafe_1793908265168.jpg';
 
 interface LandingViewProps {
   currentUser: User | null;
@@ -23,7 +24,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
       <section className="relative overflow-hidden rounded-3xl bg-stone-900 text-white shadow-xl">
         <div className="absolute inset-0 z-0 opacity-40 mix-blend-overlay">
           <img
-            src="/src/assets/images/hero_honduran_cafe_1793908265168.jpg"
+            src={heroHonduranCafe}
             alt="Café de Honduras"
             className="w-full h-full object-cover"
           />

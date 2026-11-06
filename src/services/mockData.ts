@@ -8,6 +8,12 @@ import {
   User,
   AuditLog,
 } from '../types';
+import cafeCopanLogo from '../assets/images/cafe_copan_logo_1793908266884.jpg';
+import heroHonduranCafe from '../assets/images/hero_honduran_cafe_1793908265168.jpg';
+import baleadaEspecial from '../assets/images/baleada_especial_1793908264377.jpg';
+import desayunoTipico from '../assets/images/desayuno_tipico_hn_1793908266298.jpg';
+import cafePourover from '../assets/images/cafe_pourover_honduras_1793909290813.jpg';
+import polloChuco from '../assets/images/pollo_chuco_honduras_1793909291520.jpg';
 
 export const INITIAL_USERS: User[] = [
   {
@@ -67,8 +73,8 @@ export const INITIAL_BUSINESSES: Business[] = [
     id: 'biz_cafe_copan',
     slug: 'cafe-copan',
     nombre: 'Café Copán Artesanal',
-    logoUrl: '/src/assets/images/cafe_copan_logo_1793908266884.jpg',
-    bannerUrl: '/src/assets/images/hero_honduran_cafe_1793908265168.jpg',
+    logoUrl: cafeCopanLogo,
+    bannerUrl: heroHonduranCafe,
     descripcion: 'Especialistas en café de estricta altura de Santa Rosa de Copán, desayunos típicos en loza de barro y repostería tradicional.',
     direccion: 'Barrio El Centro, Calle Real #14, Santa Rosa de Copán',
     ciudad: 'Santa Rosa de Copán',
@@ -86,7 +92,7 @@ export const INITIAL_BUSINESSES: Business[] = [
     slug: 'comedor-suyapa',
     nombre: 'Comedor y Antojitos Doña Suyapa',
     logoUrl: '',
-    bannerUrl: '/src/assets/images/baleada_especial_1793908264377.jpg',
+    bannerUrl: baleadaEspecial,
     descripcion: 'Comida casera hondureña, platos del día calientitos, baleadas con mantequilla de hacienda y refrescos naturales.',
     direccion: 'Blvd. Morazán, frente a Plaza Criolla, Tegucigalpa',
     ciudad: 'Tegucigalpa',
@@ -104,7 +110,7 @@ export const INITIAL_BUSINESSES: Business[] = [
     slug: 'antojitos-progreso',
     nombre: 'Baleadas y Antojitos El Progreso',
     logoUrl: '',
-    bannerUrl: '/src/assets/images/desayuno_tipico_hn_1793908266298.jpg',
+    bannerUrl: desayunoTipico,
     descripcion: 'Baleadas gigantes de harina recién palmeada, pastelitos de carne y catrachitas crujientes.',
     direccion: 'Barrio Las Delicias, salida a San Pedro Sula, El Progreso',
     ciudad: 'El Progreso',
@@ -129,7 +135,7 @@ export const INITIAL_MENU_ITEMS: MenuItem[] = [
     categoria: 'Bebidas Calientes',
     precio: 45.0,
     disponible: true,
-    fotoUrl: '/src/assets/images/cafe_pourover_honduras_1793909290813.jpg',
+    fotoUrl: cafePourover,
   },
   {
     id: 'menu_copan_2',
@@ -139,7 +145,7 @@ export const INITIAL_MENU_ITEMS: MenuItem[] = [
     categoria: 'Desayunos & Antojos',
     precio: 55.0,
     disponible: true,
-    fotoUrl: '/src/assets/images/baleada_especial_1793908264377.jpg',
+    fotoUrl: baleadaEspecial,
   },
   {
     id: 'menu_copan_3',
@@ -149,7 +155,7 @@ export const INITIAL_MENU_ITEMS: MenuItem[] = [
     categoria: 'Desayunos & Antojos',
     precio: 110.0,
     disponible: true,
-    fotoUrl: '/src/assets/images/desayuno_tipico_hn_1793908266298.jpg',
+    fotoUrl: desayunoTipico,
   },
   {
     id: 'menu_copan_4',
@@ -188,7 +194,7 @@ export const INITIAL_MENU_ITEMS: MenuItem[] = [
     categoria: 'Baleadas',
     precio: 35.0,
     disponible: true,
-    fotoUrl: '/src/assets/images/baleada_especial_1793908264377.jpg',
+    fotoUrl: baleadaEspecial,
   },
   {
     id: 'menu_suyapa_2',
@@ -198,7 +204,7 @@ export const INITIAL_MENU_ITEMS: MenuItem[] = [
     categoria: 'Almuerzos',
     precio: 135.0,
     disponible: true,
-    fotoUrl: '/src/assets/images/pollo_chuco_honduras_1793909291520.jpg',
+    fotoUrl: polloChuco,
   },
   {
     id: 'menu_suyapa_3',

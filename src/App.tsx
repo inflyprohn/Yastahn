@@ -21,6 +21,21 @@ import { ClientAuthView } from './views/ClientAuthView';
 import { OwnerAuthView } from './views/OwnerAuthView';
 import { SuperadminAuthView } from './views/SuperadminAuthView';
 
+const APP_BASE_PATH = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+
+function getAppRoute(pathname: string): string {
+  const route = APP_BASE_PATH && pathname.startsWith(APP_BASE_PATH)
+    ? pathname.slice(APP_BASE_PATH.length)
+    : pathname;
+  return route || '/';
+}
+
+function getBrowserPath(route: string): string {
+  const normalizedRoute = route.startsWith('/') ? route : `/${route}`;
+  if (!APP_BASE_PATH) return normalizedRoute;
+  return normalizedRoute === '/' ? `${APP_BASE_PATH}/` : `${APP_BASE_PATH}${normalizedRoute}`;
+}
+
 export default function App() {
   const [currentUser, setUserState] = useState<User | null>(null);
   const [currentRoute, setCurrentRoute] = useState<string>('/');
@@ -36,15 +51,26 @@ export default function App() {
     const user = getCurrentUser();
     setUserState(user);
 
-    // Parsear ruta inicial si existe
-    const path = window.location.pathname;
-    if (path.startsWith('/c/')) {
-      const slug = path.replace('/c/', '').split('/')[0];
-      setSelectedCafeSlug(slug);
-      setCurrentRoute(`/c/${slug}`);
-    } else if (path !== '/' && path !== '') {
-      setCurrentRoute(path);
-    }
+    // Parsear ruta inicial, quitando la base del repositorio en GitHub Pages.
+    const syncRouteFromLocation = () => {
+      const path = getAppRoute(window.location.pathname);
+      if (path.startsWith('/c/')) {
+        const slug = path.replace('/c/', '').split('/')[0];
+        setSelectedCafeSlug(slug);
+        setOriginCafeSlug(slug);
+        setCurrentRoute(`/c/${slug}`);
+      } else {
+        setSelectedCafeSlug(null);
+        setCurrentRoute(path);
+      }
+    };
+
+    syncRouteFromLocation();
+    window.addEventListener('popstate', syncRouteFromLocation);
+
+    return () => {
+      window.removeEventListener('popstate', syncRouteFromLocation);
+    };
   }, []);
 
   const navigateTo = (route: string) => {
@@ -52,10 +78,11 @@ export default function App() {
     if (route.startsWith('/c/')) {
       const slug = route.replace('/c/', '').split('/')[0];
       setSelectedCafeSlug(slug);
-      window.history.pushState({}, '', route);
+      setOriginCafeSlug(slug);
+      window.history.pushState({}, '', getBrowserPath(route));
     } else {
       setSelectedCafeSlug(null);
-      window.history.pushState({}, '', route);
+      window.history.pushState({}, '', getBrowserPath(route));
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
