@@ -252,13 +252,13 @@ export default function App() {
             <ShieldAlert className="w-12 h-12 text-rose-600 mx-auto" />
             <h2 className="text-xl font-bold text-stone-900">Acceso No Autorizado</h2>
             <p className="text-xs text-stone-600">
-              Esta pantalla requiere credenciales de Superadministrador. No se proporcionan datos privados.
+              Esta sección está reservada para el equipo administrador de Yasta.
             </p>
             <button
-              onClick={() => navigateTo('/superadmin/ingresar')}
+              onClick={() => navigateTo('/')}
               className="px-5 py-2.5 bg-stone-900 text-white rounded-xl text-xs font-bold"
             >
-              Iniciar sesión como Superadmin
+              Volver al inicio
             </button>
           </div>
         );
