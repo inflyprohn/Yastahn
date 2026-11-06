@@ -5,9 +5,8 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
-    // GitHub Pages sirve este proyecto dentro de /Yastahn/.
-    // El workflow proporciona VITE_BASE_PATH durante la compilación;
-    // en AI Studio y local se conserva la raíz /.
+    // GitHub Pages publica el proyecto bajo /Yastahn/. En AI Studio y local
+    // se usa /; el workflow define VITE_BASE_PATH para la compilación remota.
     base: process.env.VITE_BASE_PATH || '/',
     plugins: [react(), tailwindcss()],
     resolve: {

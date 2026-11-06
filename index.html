@@ -12,6 +12,23 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+      /* Vite reemplaza %BASE_URL% al compilar para respetar la ruta del sitio. */
+      @font-face {
+        font-family: "Orlando";
+        src: url("%BASE_URL%fonts/Orlando.woff2") format("woff2");
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Grift";
+        src: url("%BASE_URL%fonts/Grift-Medium.ttf") format("truetype");
+        font-style: normal;
+        font-weight: 500;
+        font-display: swap;
+      }
+    </style>
   </head>
   <body class="bg-stone-50 text-stone-900 antialiased min-h-screen selection:bg-amber-100 selection:text-amber-900">
     <div id="root"></div>

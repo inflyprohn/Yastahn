@@ -101,9 +101,13 @@ Para acceder a ver el menú y ordenar en cada cafetería, el cliente debe ingres
 
 ---
 
-## 4. Configuración de Dominio Propio para Códigos QR
+## 4. GitHub Pages y enlaces QR
 
-Para que los códigos QR generados tengan un enlace definitivo con su propio dominio web (ej. `https://yasta.hn/c/cafe-copan`), configure la siguiente variable en su archivo `.env`:
+El sitio de proyecto se publica en `https://inflyprohn.github.io/Yastahn/`. El workflow `.github/workflows/deploy.yml` instala dependencias con Bun, compila Vite y publica `dist` en GitHub Pages. En el repositorio, selecciona **Settings → Pages → GitHub Actions** como fuente.
+
+La compilación define `VITE_BASE_PATH=/Yastahn/` para que los recursos, rutas internas y códigos QR usen la ruta del repositorio. Para cambiar el dominio de los códigos QR, configura `VITE_PUBLIC_APP_URL` con el origen del sitio y sin una ruta al final. En el workflow actual su valor es `https://inflyprohn.github.io`.
+
+Si publicas más adelante en un dominio propio en la raíz, configura también `VITE_BASE_PATH=/` en el workflow.
 
 ```env
 VITE_PUBLIC_APP_URL="https://midominio.com"
@@ -146,12 +150,14 @@ Para convertir este prototipo demostrativo en un sistema listo para producción 
 Para ejecutar el proyecto en su máquina local:
 
 ```bash
-# 1. Instalar dependencias
-npm install
+# 1. Instalar dependencias (el proyecto incluye bun.lock)
+bun install --frozen-lockfile
 
 # 2. Iniciar servidor de desarrollo en el puerto 3000
-npm run dev
+bun run dev
 
 # 3. Compilar para producción
-npm run build
+bun run build
 ```
+
+Las declaraciones de Orlando y Grift están preparadas para `public/fonts/Orlando.woff2` y `public/fonts/Grift-Medium.ttf`. Esta descarga solo incluye la nota de esa carpeta, no los archivos de fuente; añádelos allí para que se apliquen. Mientras tanto se muestran fuentes de respaldo.
