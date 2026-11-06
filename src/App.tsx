@@ -158,9 +158,10 @@ export default function App() {
       );
     }
 
-    if (currentRoute === '/dueno/ingresar') {
+    if (currentRoute === '/dueno/ingresar' || currentRoute === '/dueno/registro') {
       return (
         <OwnerAuthView
+          initialMode={currentRoute === '/dueno/registro' ? 'registro' : 'ingresar'}
           onSuccess={handleUserChanged}
           onNavigate={navigateTo}
         />
