@@ -8,12 +8,19 @@ import {
   Shield,
   ChevronLeft,
   ChevronRight,
-  CheckCircle2,
-  Clock,
-  Settings,
-  Sparkles,
+  QrCode,
 } from 'lucide-react';
 import { User } from '../types';
+
+type SidebarNavItem = {
+  id: string;
+  label: string;
+  shortLabel: string;
+  icon: React.ElementType;
+  route: string;
+  isActive: boolean;
+  description: string;
+};
 
 interface SidebarProps {
   currentUser: User | null;
@@ -34,68 +41,104 @@ export const Sidebar: React.FC<SidebarProps> = ({
   mobileOpen,
   onCloseMobile,
 }) => {
-  // Definir elementos de navegación contextuales
-  const navItems = [
-    {
-      id: 'explorar',
-      label: 'Explorar Cafeterías',
-      shortLabel: 'Inicio',
-      icon: Store,
-      route: '/',
-      isActive: currentRoute === '/' || currentRoute.startsWith('/c/'),
-      description: 'Menús y pedidos para recoger',
-    },
-    {
-      id: 'pedidos',
-      label: currentUser?.role === 'dueno' ? 'Gestión de Pedidos' : 'Mis Pedidos',
-      shortLabel: 'Pedidos',
-      icon: ShoppingBag,
-            route:
-        currentUser?.role === 'dueno'
-          ? '/dueno/pedidos'
-          : currentUser?.role === 'cliente'
-            ? '/cliente'
-            : '/cliente/ingresar',
-      isActive:
-        (currentUser?.role === 'dueno' &&
-          ['/dueno', '/dueno/pedidos', '/dueno/menu', '/dueno/qr'].includes(currentRoute)) ||
-        (currentUser?.role === 'cliente' && currentRoute === '/cliente'),
-      description: 'Estado de preparación en barra',
-    },
-    {
-      id: 'cuentas',
-      label:
-        currentUser?.role === 'dueno'
-          ? 'Cuentas y Cobros'
-          : currentUser?.role === 'superadmin'
+  // El dueño navega cada sección desde una ruta independiente.
+  const exploreItem: SidebarNavItem = {
+    id: 'explorar',
+    label: 'Explorar Cafeterías',
+    shortLabel: 'Inicio',
+    icon: Store,
+    route: '/',
+    isActive: currentRoute === '/' || currentRoute.startsWith('/c/'),
+    description: 'Menús y pedidos para recoger',
+  };
+
+  const navItems: SidebarNavItem[] = currentUser?.role === 'dueno'
+    ? [
+        exploreItem,
+        {
+          id: 'pedidos',
+          label: 'Pedidos en Vivo',
+          shortLabel: 'Pedidos',
+          icon: ShoppingBag,
+          route: '/dueno/pedidos',
+          isActive: currentRoute === '/dueno' || currentRoute === '/dueno/pedidos',
+          description: 'Estado de preparación en barra',
+        },
+        {
+          id: 'menu',
+          label: 'Menú y Platillos',
+          shortLabel: 'Menú',
+          icon: Store,
+          route: '/dueno/menu',
+          isActive: currentRoute === '/dueno/menu',
+          description: 'Administra categorías y platillos',
+        },
+        {
+          id: 'cuentas',
+          label: 'Clientes y Fin de Mes',
+          shortLabel: 'Clientes',
+          icon: Receipt,
+          route: '/dueno/cuentas',
+          isActive: currentRoute === '/dueno/cuentas',
+          description: 'Saldos, crédito y abonos',
+        },
+        {
+          id: 'qr',
+          label: 'Código QR del negocio',
+          shortLabel: 'Código QR',
+          icon: QrCode,
+          route: '/dueno/qr',
+          isActive: currentRoute === '/dueno/qr',
+          description: 'Comparte el menú de tu local',
+        },
+        {
+          id: 'soporte',
+          label: 'Soporte y Casos',
+          shortLabel: 'Soporte',
+          icon: MessageSquare,
+          route: '/soporte',
+          isActive: currentRoute === '/soporte',
+          description: 'Canal de atención y reportes',
+        },
+      ]
+    : [
+        exploreItem,
+        {
+          id: 'pedidos',
+          label: currentUser?.role === 'cliente' ? 'Mis Pedidos' : 'Pedidos',
+          shortLabel: 'Pedidos',
+          icon: ShoppingBag,
+          route: currentUser?.role === 'cliente' ? '/cliente' : '/cliente/ingresar',
+          isActive: currentUser?.role === 'cliente' && currentRoute === '/cliente',
+          description: 'Estado de preparación en barra',
+        },
+        {
+          id: 'cuentas',
+          label: currentUser?.role === 'superadmin'
             ? 'Auditoría Global'
             : 'Saldos a Fin de Mes',
-      shortLabel: 'Cuentas',
-      icon: Receipt,
-      route:
-        currentUser?.role === 'dueno'
-          ? '/dueno/cuentas'
-          : currentUser?.role === 'superadmin'
+          shortLabel: 'Cuentas',
+          icon: Receipt,
+          route: currentUser?.role === 'superadmin'
             ? '/superadmin'
             : currentUser?.role === 'cliente'
               ? '/cliente'
               : '/cliente/ingresar',
-      isActive:
-        (currentRoute === '/cliente' && currentUser?.role === 'cliente') ||
-        (currentRoute === '/dueno/cuentas' && currentUser?.role === 'dueno') ||
-        (currentRoute === '/superadmin' && currentUser?.role === 'superadmin'),
-      description: 'Libro contable y abonos',
-    },
-    {
-      id: 'soporte',
-      label: 'Soporte y Casos',
-      shortLabel: 'Soporte',
-      icon: MessageSquare,
-      route: '/soporte',
-      isActive: currentRoute === '/soporte',
-      description: 'Canal de atención y reportes',
-    },
-  ];
+          isActive:
+            (currentRoute === '/cliente' && currentUser?.role === 'cliente') ||
+            (currentRoute === '/superadmin' && currentUser?.role === 'superadmin'),
+          description: 'Libro contable y abonos',
+        },
+        {
+          id: 'soporte',
+          label: 'Soporte y Casos',
+          shortLabel: 'Soporte',
+          icon: MessageSquare,
+          route: '/soporte',
+          isActive: currentRoute === '/soporte',
+          description: 'Canal de atención y reportes',
+        },
+      ];
 
   // Elementos adicionales según rol
   if (currentUser?.role === 'superadmin') {
