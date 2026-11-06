@@ -49,7 +49,7 @@ export const TopBar: React.FC<TopBarProps> = ({
       <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-stone-200 no-print">
         <div className="w-full px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           {/* Lado Izquierdo: Botón Menú Móvil + Título Contextual */}
-          <div className="flex items-center gap-3">
+          
             <button
               onClick={onOpenMobileSidebar}
               className="lg:hidden p-2 rounded-xl text-stone-700 hover:text-stone-900 hover:bg-stone-100 transition-colors focus:outline-none"
@@ -58,7 +58,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               <HamburgerIcon className="w-5 h-5" />
             </button>
 
-            <div>
+            <div className="min-w-0 flex-1">
               <h1 className="text-base sm:text-lg font-black font-orlando text-stone-900 tracking-tight leading-tight">
                 {getPageTitle()}
               </h1>
