@@ -239,7 +239,6 @@ export default function App() {
         <OwnerPortalView
           currentUser={currentUser}
           currentRoute={currentRoute}
-          onNavigate={navigateTo}
           onSelectCafe={handleSelectCafe}
         />
       );
