@@ -79,15 +79,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
       description: 'Estado de preparación en barra',
     },
     {
+          {
       id: 'cuentas',
       label:
         currentUser?.role === 'dueno'
           ? 'Cuentas y Cobros'
           : currentUser?.role === 'superadmin'
-          ? 'Auditoría Global'
-          : 'Saldos a Fin de Mes',
+            ? 'Auditoría Global'
+            : 'Saldos a Fin de Mes',
       shortLabel: 'Cuentas',
-            route:
+      icon: Receipt,
+      route:
         currentUser?.role === 'dueno'
           ? '/dueno/cuentas'
           : currentUser?.role === 'superadmin'
@@ -98,7 +100,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       isActive:
         (currentRoute === '/cliente' && currentUser?.role === 'cliente') ||
         (currentRoute === '/dueno/cuentas' && currentUser?.role === 'dueno') ||
-        (currentRoute === '/superadmin' && currentUser?.role === 'superadmin'),
         (currentRoute === '/superadmin' && currentUser?.role === 'superadmin'),
       description: 'Libro contable y abonos',
     },
