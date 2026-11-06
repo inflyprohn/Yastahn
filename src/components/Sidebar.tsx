@@ -9,7 +9,6 @@ import {
   ChevronLeft,
   ChevronRight,
   User as UserIcon,
-  LogIn,
   LogOut,
   Camera,
   CheckCircle2,
@@ -258,9 +257,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {renderNavButtons()}
         </div>
 
-        {/* Zona Inferior: Tarjeta de Usuario / Perfil */}
-        <div className="p-3 border-t border-stone-200 bg-stone-50/80">
-          {currentUser ? (
+        {/* Zona Inferior: Perfil solo cuando hay una sesión activa */}
+        {currentUser && (
+          <div className="p-3 border-t border-stone-200 bg-stone-50/80">
             <div
               className={`rounded-2xl border border-stone-200 bg-white p-3 shadow-xs space-y-2 ${
                 isCollapsed ? 'text-center' : ''
@@ -314,53 +313,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </div>
               )}
             </div>
-          ) : (
-            <div className={`space-y-2 ${isCollapsed ? 'text-center' : ''}`}>
-              {!isCollapsed ? (
-                <div className="p-3 bg-white rounded-2xl border border-stone-200 shadow-xs space-y-2 text-center">
-                  <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-900 flex items-center justify-center mx-auto">
-                    <Coffee className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-stone-900">Bienvenido a Yasta</p>
-                    <p className="text-[10px] text-stone-500">Pide para recoger o gestiona tu cafetería</p>
-                  </div>
-                  <div className="flex gap-2 pt-1">
-                    <button
-                      onClick={() => {
-                        onNavigate('/cliente/ingresar');
-                        onCloseMobile();
-                      }}
-                      className="flex-1 py-1.5 bg-amber-800 hover:bg-amber-900 text-white rounded-xl text-[11px] font-bold transition-colors"
-                    >
-                      Cliente
-                    </button>
-                    <button
-                      onClick={() => {
-                        onNavigate('/dueno/ingresar');
-                        onCloseMobile();
-                      }}
-                      className="flex-1 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-xl text-[11px] font-bold transition-colors"
-                    >
-                      Dueño
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  onClick={() => {
-                    onNavigate('/cliente/ingresar');
-                    onCloseMobile();
-                  }}
-                  title="Iniciar Sesión"
-                  className="w-full p-2.5 bg-amber-800 text-white rounded-xl flex items-center justify-center hover:bg-amber-900 transition-colors shadow-xs"
-                >
-                  <LogIn className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </aside>
 
       {/* Barra de Navegación Inferior Móvil (Mobile Bottom Bar amigable) */}
