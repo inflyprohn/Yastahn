@@ -1,0 +1,290 @@
+import React from 'react';
+import { Coffee, ArrowRight, QrCode, ShoppingBag, Shield, Clock, MapPin, Phone, CheckCircle2, KeyRound } from 'lucide-react';
+import { Business, User } from '../types';
+import { getBusinesses } from '../services/storage';
+
+interface LandingViewProps {
+  currentUser: User | null;
+  onNavigate: (route: string) => void;
+  onSelectCafe: (slug: string) => void;
+}
+
+export const LandingView: React.FC<LandingViewProps> = ({
+  currentUser,
+  onNavigate,
+  onSelectCafe,
+}) => {
+  const businesses = getBusinesses();
+  const activeBusinesses = businesses.filter((b) => b.estado === 'activo');
+
+  return (
+    <div className="space-y-12 pb-16">
+      {/* Hero Section */}
+      <section className="relative overflow-hidden rounded-3xl bg-stone-900 text-white shadow-xl">
+        <div className="absolute inset-0 z-0 opacity-40 mix-blend-overlay">
+          <img
+            src="/src/assets/images/hero_honduran_cafe_1793908265168.jpg"
+            alt="Café de Honduras"
+            className="w-full h-full object-cover"
+          />
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-900/80 to-transparent z-0" />
+
+        <div className="relative z-10 max-w-4xl mx-auto px-6 py-16 sm:py-24 text-center space-y-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-400/30 text-amber-300 text-xs font-semibold">
+            <span>Honduras</span>
+            <span aria-hidden="true">·</span>
+            <span>Pedidos para recoger & Cuentas claras</span>
+          </div>
+
+          <h1 className="text-3xl sm:text-5xl font-black font-orlando tracking-tight text-balance leading-tight">
+            Tus comidas y café favorito, listos cuando llegues.
+          </h1>
+
+          <p className="text-base sm:text-lg text-stone-300 max-w-2xl mx-auto text-balance">
+            Plataforma para cafeterías, comedores y negocios de comida en Honduras. Consulta el menú, haz tu pedido para recoger en barra y lleva el control de pagos o saldo a fin de mes.
+          </p>
+
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <button
+              onClick={() => {
+                const el = document.getElementById('cafeterias-list');
+                el?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="px-6 py-3.5 bg-amber-600 hover:bg-amber-500 text-white font-bold text-sm rounded-xl transition-colors shadow-lg shadow-amber-900/30 flex items-center gap-2"
+            >
+              <ShoppingBag className="w-4 h-4" />
+              Explorar negocios y ordenar
+            </button>
+
+            {!currentUser && (
+              <button
+                onClick={() => onNavigate('/dueno/ingresar')}
+                className="px-6 py-3.5 bg-stone-800/80 hover:bg-stone-800 text-stone-100 font-bold text-sm rounded-xl border border-stone-700 transition-colors"
+              >
+                Registrar o entrar como dueño
+              </button>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Características clave en Honduras */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="p-6 bg-white rounded-2xl border border-stone-200 shadow-xs space-y-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
+            <QrCode className="w-5 h-5" />
+          </div>
+          <h3 className="text-base font-bold text-stone-900">Menús con código QR</h3>
+          <p className="text-xs text-stone-600 leading-relaxed">
+            Cada cafetería cuenta con su propio código QR para mesas o mostrador. Los clientes escanean y piden directamente para recoger sin esperas.
+          </p>
+        </div>
+
+        <div className="p-6 bg-white rounded-2xl border border-stone-200 shadow-xs space-y-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+            L
+          </div>
+          <h3 className="text-base font-bold text-stone-900">Pagos y saldo a fin de mes</h3>
+          <p className="text-xs text-stone-600 leading-relaxed">
+            Acepta efectivo, transferencias bancarias o permite a tus clientes de confianza acumular consumos a fin de mes, con libro contable inmutable.
+          </p>
+        </div>
+
+        <div className="p-6 bg-white rounded-2xl border border-stone-200 shadow-xs space-y-3">
+          <div className="w-10 h-10 rounded-xl bg-stone-100 text-stone-800 flex items-center justify-center font-bold">
+            <Shield className="w-5 h-5" />
+          </div>
+          <h3 className="text-base font-bold text-stone-900">Cuentas aisladas por local</h3>
+          <p className="text-xs text-stone-600 leading-relaxed">
+            Un mismo cliente puede consumir en varios comedores; sus pedidos, saldos y cuentas permanecen estrictamente separados por negocio.
+          </p>
+        </div>
+      </section>
+
+      {/* Directorio de Negocios en Demostración */}
+      <section id="cafeterias-list" className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-stone-200 pb-4">
+          <div>
+            <h2 className="text-2xl font-black font-orlando text-stone-900 tracking-tight">
+              Negocios disponibles en Yasta
+            </h2>
+            <p className="text-xs text-stone-600 mt-1">
+              Selecciona una cafetería o comedor para ver su menú, precios en Lempiras y realizar tu pedido para recoger.
+            </p>
+          </div>
+          <span className="text-xs font-semibold text-stone-500">
+            {activeBusinesses.length} locales activos en demostración
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {businesses.map((biz) => {
+            const isSuspended = biz.estado === 'suspendido';
+            return (
+              <div
+                key={biz.id}
+                className={`bg-white rounded-2xl border transition-all overflow-hidden flex flex-col justify-between shadow-xs ${
+                  isSuspended
+                    ? 'border-rose-200 opacity-75'
+                    : 'border-stone-200 hover:shadow-md hover:border-amber-400'
+                }`}
+              >
+                <div>
+                  {/* Banner */}
+                  <div className="relative h-44 bg-stone-200 overflow-hidden">
+                    {biz.bannerUrl ? (
+                      <img
+                        src={biz.bannerUrl}
+                        alt={biz.nombre}
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-tr from-amber-800 to-stone-800 flex items-center justify-center text-white">
+                        <Coffee className="w-12 h-12 opacity-40" />
+                      </div>
+                    )}
+
+                    {isSuspended && (
+                      <div className="absolute top-3 right-3 bg-rose-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-md shadow-sm">
+                        Suspendido temporalmente
+                      </div>
+                    )}
+
+                    {/* Logo circular sobre el banner */}
+                    <div className="absolute bottom-3 left-4 w-14 h-14 rounded-xl bg-white p-1 shadow-md border border-stone-200 overflow-hidden">
+                      {biz.logoUrl ? (
+                        <img
+                          src={biz.logoUrl}
+                          alt={biz.nombre}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-stone-900 text-white font-black text-sm flex items-center justify-center rounded-lg">
+                          {biz.nombre.slice(0, 2).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Info */}
+                  <div className="p-5 pt-4 space-y-3">
+                    <div>
+                      <h3 className="text-lg font-bold font-orlando text-stone-900 tracking-tight">
+                        {biz.nombre}
+                      </h3>
+                      <p className="text-xs text-stone-600 line-clamp-2 mt-1">
+                        {biz.descripcion}
+                      </p>
+                    </div>
+
+                    <div className="space-y-1.5 text-xs text-stone-500 pt-1">
+                      <div className="flex items-start gap-2">
+                        <MapPin className="w-3.5 h-3.5 text-stone-400 shrink-0 mt-0.5" />
+                        <span className="truncate">{biz.direccion}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+                        <span className="truncate">{biz.horario}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Phone className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+                        <span>{biz.telefono}</span>
+                      </div>
+                    </div>
+
+                    {/* Badge de Fidelidad y PIN requerido */}
+                    <div className="pt-2.5 border-t border-stone-100 flex items-center justify-between text-[11px]">
+                      <div className="flex items-center gap-1.5 text-amber-900 font-medium bg-amber-50/80 px-2 py-0.5 rounded-lg border border-amber-200/60">
+                        <KeyRound className="w-3 h-3 text-amber-700 shrink-0" />
+                        <span>Requiere PIN del local</span>
+                      </div>
+                      {biz.pinAccesoMenu && (
+                        <span className="text-stone-400 font-mono text-[10px]">
+                          Demo: {biz.pinAccesoMenu}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-5 pt-0">
+                  <button
+                    onClick={() => onSelectCafe(biz.slug)}
+                    disabled={isSuspended}
+                    className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 ${
+                      isSuspended
+                        ? 'bg-stone-100 text-stone-400 cursor-not-allowed'
+                        : 'bg-stone-900 hover:bg-stone-800 text-white shadow-xs'
+                    }`}
+                  >
+                    <span>Ver menú y ordenar</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Sección Informativa: Roles y acceso */}
+      <section className="bg-stone-100 rounded-3xl p-8 border border-stone-200 space-y-6">
+        <h3 className="text-lg font-bold text-stone-900">
+          ¿Cómo probar los tres roles en esta demostración?
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-stone-700">
+          <div className="bg-white p-5 rounded-2xl border border-stone-200/80 space-y-2">
+            <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider">
+              1. Rol Cliente
+            </span>
+            <p className="font-semibold text-stone-900 text-sm">Carlos Mejía</p>
+            <p>
+              Prueba registrar pedidos para recoger, revisar tu carrito, pagar en efectivo o usar tu saldo a fin de mes habilitado en Café Copán.
+            </p>
+            <button
+              onClick={() => onNavigate('/cliente/ingresar')}
+              className="text-amber-800 font-bold hover:underline inline-flex items-center gap-1 pt-1"
+            >
+              Ingresar como cliente <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+
+          <div className="bg-white p-5 rounded-2xl border border-stone-200/80 space-y-2">
+            <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">
+              2. Rol Dueño de Negocio
+            </span>
+            <p className="font-semibold text-stone-900 text-sm">Doña Elena Romero</p>
+            <p>
+              Administra el menú, cambia el estado de pedidos en preparación o listos, genera e imprime el código QR y gestiona el crédito de clientes.
+            </p>
+            <button
+              onClick={() => onNavigate('/dueno/ingresar')}
+              className="text-emerald-800 font-bold hover:underline inline-flex items-center gap-1 pt-1"
+            >
+              Ingresar al panel de dueño <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+
+          <div className="bg-white p-5 rounded-2xl border border-stone-200/80 space-y-2">
+            <span className="text-[11px] font-bold text-stone-800 uppercase tracking-wider">
+              3. Superadministrador
+            </span>
+            <p className="font-semibold text-stone-900 text-sm">Lic. Roberto Paz</p>
+            <p>
+              Bandeja global de soporte, auditoría de acciones administrativas y supervisión de todas las cafeterías (suspender/reactivar).
+            </p>
+            <button
+              onClick={() => onNavigate('/superadmin/ingresar')}
+              className="text-stone-900 font-bold hover:underline inline-flex items-center gap-1 pt-1"
+            >
+              Ingresar a superadmin <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};

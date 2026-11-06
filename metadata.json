@@ -1,0 +1,8 @@
+{
+  "name": "Yasta - Menús, Pedidos y Cobros para Cafeterías en Honduras",
+  "description": "Plataforma web móvil y de escritorio para cafeterías y comedores en Honduras. Gestión de menús, pedidos para recoger, cuentas con pago a fin de mes, códigos QR e historial financiero en Lempiras (HNL).",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
