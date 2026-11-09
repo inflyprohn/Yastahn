@@ -1153,6 +1153,81 @@ export function getBusinessClientsWithAccounts(
   });
 }
 
+/**
+ * Elimina una cuenta de cliente de prueba únicamente cuando no tiene actividad
+ * ni relaciones con otros negocios. El historial contable nunca se borra.
+ */
+export function deleteClientProfile(
+  clienteId: string,
+  businessId: string,
+  actingUser: User
+): { success: boolean; error?: string } {
+  const business = getBusinessById(businessId);
+  if (!business) return { success: false, error: 'No se encontró el negocio seleccionado.' };
+  if (actingUser.role !== 'superadmin' && business.ownerId !== actingUser.id) {
+    return { success: false, error: 'No tienes permiso para eliminar clientes de este negocio.' };
+  }
+
+  const users = getAllUsers();
+  const client = users.find((user) => user.id === clienteId && user.role === 'cliente');
+  if (!client) return { success: false, error: 'No se encontró el perfil de cliente.' };
+
+  const orders = get<Order[]>(STORAGE_KEYS.ORDERS, INITIAL_ORDERS);
+  if (orders.some((order) => order.clienteId === clienteId)) {
+    return {
+      success: false,
+      error: 'No se puede eliminar este perfil porque tiene pedidos registrados. El historial debe conservarse.',
+    };
+  }
+
+  const movements = get<FinancialMovement[]>(STORAGE_KEYS.MOVEMENTS, INITIAL_MOVEMENTS);
+  if (movements.some((movement) => movement.clienteId === clienteId)) {
+    return {
+      success: false,
+      error: 'No se puede eliminar este perfil porque tiene movimientos contables. El historial debe conservarse.',
+    };
+  }
+
+  const tickets = get<SupportTicket[]>(STORAGE_KEYS.TICKETS, INITIAL_TICKETS);
+  if (tickets.some((ticket) => ticket.autorId === clienteId)) {
+    return {
+      success: false,
+      error: 'No se puede eliminar este perfil porque tiene casos de soporte registrados.',
+    };
+  }
+
+  const accounts = get<ClientBusinessAccount[]>(STORAGE_KEYS.ACCOUNTS, INITIAL_ACCOUNTS);
+  const clientAccounts = accounts.filter((account) => account.clienteId === clienteId);
+  if (clientAccounts.some((account) => account.businessId !== businessId)) {
+    return {
+      success: false,
+      error: 'Este cliente tiene una cuenta en otro negocio. Por seguridad, solo el superadministrador puede gestionar ese perfil.',
+    };
+  }
+
+  const selectedAccount = clientAccounts.find((account) => account.businessId === businessId);
+  if ((selectedAccount?.saldoPendiente || 0) > 0) {
+    return {
+      success: false,
+      error: 'No se puede eliminar un perfil con saldo pendiente. Registra primero el pago o ajuste correspondiente.',
+    };
+  }
+
+  set(STORAGE_KEYS.USERS, users.filter((user) => user.id !== clienteId));
+  set(STORAGE_KEYS.ACCOUNTS, accounts.filter((account) => account.clienteId !== clienteId));
+
+  addAuditLog({
+    usuarioId: actingUser.id,
+    usuarioNombre: actingUser.nombre,
+    rol: actingUser.role,
+    accion: 'ELIMINAR_PERFIL_CLIENTE',
+    descripcion: `Se eliminó el perfil de cliente ${clienteId} de "${business.nombre}".`,
+    entidadAfectada: clienteId,
+  });
+
+  return { success: true };
+}
+
 export function togglePagoFinDeMes(
   clienteId: string,
   businessId: string,
