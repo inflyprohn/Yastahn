@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import { Copy, Download, Printer, Check, ExternalLink, QrCode as QrIcon } from 'lucide-react';
 import { Business } from '../types';
+import { businessRequiresMenuPin } from '../services/storage';
 
 interface QRCodeDisplayProps {
   business: Business;
@@ -154,7 +155,7 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
           </div>
 
           {/* PIN de fidelidad para ver el menú */}
-          {business.pinAccesoMenu && (
+          {businessRequiresMenuPin(business) && business.pinAccesoMenu && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex items-center justify-between gap-3 text-xs">
               <div>
                 <span className="font-bold text-amber-950 block">PIN de fidelidad de este local:</span>
@@ -258,7 +259,7 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
                 <p className="text-xs text-stone-600">
                   Haz tu pedido desde tu celular y recógelo calientito en el mostrador.
                 </p>
-                {business.pinAccesoMenu && (
+                {businessRequiresMenuPin(business) && business.pinAccesoMenu && (
                   <div className="bg-amber-100 border border-amber-300 rounded-lg py-1 px-3 inline-block my-1 text-xs">
                     <span className="text-stone-700 font-semibold">PIN de fidelidad para ordenar: </span>
                     <strong className="font-mono font-black text-amber-950 text-sm tracking-wider">
