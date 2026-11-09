@@ -7,7 +7,7 @@ import { businessRequiresMenuPin } from '../services/storage';
 interface QRCodeDisplayProps {
   business: Business;
   onNavigateToPublicMenu?: () => void;
-  onToggleMenuPin: (enabled: boolean) => void;
+  onToggleMenuPin: (enabled: boolean) => boolean;
   onEditMenuPin: () => void;
 }
 
@@ -20,7 +20,16 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [copied, setCopied] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);
-  const menuPinEnabled = businessRequiresMenuPin(business);
+  const [menuPinEnabled, setMenuPinEnabled] = useState(() => businessRequiresMenuPin(business));
+
+  useEffect(() => {
+    setMenuPinEnabled(businessRequiresMenuPin(business));
+  }, [business.id, business.requierePinMenu, business.pinAccesoMenu]);
+
+  const handleToggleMenuPin = () => {
+    const nextValue = !menuPinEnabled;
+    if (onToggleMenuPin(nextValue)) setMenuPinEnabled(nextValue);
+  };
 
   // Determinar la URL pública: configurable con PUBLIC_APP_URL en prod o window.location.origin en preview
   const appOrigin =
@@ -154,7 +163,7 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
               role="switch"
               aria-checked={menuPinEnabled}
               aria-label="Exigir inicio de sesión de cliente y PIN para ver el menú"
-              onClick={() => onToggleMenuPin(!menuPinEnabled)}
+              onClick={handleToggleMenuPin}
               className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-600 focus:ring-offset-2 ${
                 menuPinEnabled ? 'bg-amber-800' : 'bg-stone-300'
               }`}
