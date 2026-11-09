@@ -259,6 +259,7 @@ export function registerOwnerWithBusiness(
     telefono: normalizedPhone,
     ownerId: newUser.id,
     estado: 'activo',
+    requierePinMenu: false,
     pinAccesoMenu: '',
     categorias: [],
     createdAt: now,
@@ -748,6 +749,13 @@ export function deleteBusinessCategory(
 
 // ==================== PIN DE ACCESO AL MENÚ (FIDELIDAD DE CLIENTES) ====================
 
+export function businessRequiresMenuPin(business: Business): boolean {
+  // Para negocios antiguos sin esta opción, conservar el comportamiento que ya tenían.
+  return typeof business.requierePinMenu === 'boolean'
+    ? business.requierePinMenu
+    : Boolean(business.pinAccesoMenu?.trim());
+}
+
 export function updateBusinessMenuPin(
   businessId: string,
   nuevoPin: string,
@@ -787,8 +795,9 @@ export function updateBusinessMenuPin(
 export function verifyBusinessMenuPin(businessId: string, pinIngresado: string): boolean {
   const business = getBusinessById(businessId);
   if (!business) return false;
-  // Si no tiene PIN configurado, está abierto
-  if (!business.pinAccesoMenu) return true;
+  if (!businessRequiresMenuPin(business)) return true;
+  // Si el dueño exige PIN pero todavía no lo configuró, no permitir el acceso por omisión.
+  if (!business.pinAccesoMenu?.trim()) return false;
   return business.pinAccesoMenu.trim().toLowerCase() === pinIngresado.trim().toLowerCase();
 }
 
