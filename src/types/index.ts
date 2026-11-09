@@ -28,6 +28,7 @@ export interface Business {
   telefono: string;
   ownerId: string;
   estado: 'activo' | 'suspendido';
+  requierePinMenu?: boolean; // Si el cliente debe ingresar el PIN antes de ver el menú
   pinAccesoMenu?: string; // PIN único proporcionado por el dueño para ver el menú
   categorias?: string[]; // Categorías personalizadas del negocio
   createdAt: string;
