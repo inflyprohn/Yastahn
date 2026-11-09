@@ -45,6 +45,7 @@ import {
 } from '../utils/formatters';
 import {
   addBusinessCategory,
+  businessRequiresMenuPin,
   cancelOrder,
   deleteBusinessCategory,
   deleteClientProfile,
@@ -165,6 +166,7 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
   // PIN de fidelidad para ver el menú
   const [pinMenuInput, setPinMenuInput] = useState(currentBiz?.pinAccesoMenu || '2026');
   const [showEditPinModal, setShowEditPinModal] = useState(false);
+  const [enablePinAfterSave, setEnablePinAfterSave] = useState(false);
   const [pinError, setPinError] = useState<string | null>(null);
 
   // Estado para registrar abono o pago a cuenta
@@ -451,14 +453,52 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
     e.preventDefault();
     if (!currentBiz) return;
     setPinError(null);
-    const res = updateBusinessMenuPin(currentBiz.id, pinMenuInput, currentUser);
-    if (res.error) {
-      setPinError(res.error);
+    const shouldEnableMenuPin = enablePinAfterSave;
+    const cleanPin = pinMenuInput.trim();
+    const pinResult = updateBusinessMenuPin(currentBiz.id, cleanPin, currentUser);
+    if (!pinResult.success) {
+      setPinError(pinResult.error || 'No se pudo guardar el PIN.');
       return;
     }
-    triggerFeedback(`PIN de fidelidad actualizado a "${pinMenuInput}"`);
+
+    if (shouldEnableMenuPin) {
+      const accessResult = saveBusiness(
+        { ...currentBiz, pinAccesoMenu: cleanPin, requierePinMenu: true },
+        currentUser
+      );
+      if (!accessResult.success) {
+        setEnablePinAfterSave(false);
+        setPinError(accessResult.error || 'El PIN se guardó, pero no se pudo activar la protección.');
+        return;
+      }
+    }
+
+    setEnablePinAfterSave(false);
     setShowEditPinModal(false);
     setBusinessRefreshKey((key) => key + 1);
+    triggerFeedback(shouldEnableMenuPin ? 'PIN guardado y menú protegido' : 'PIN del menú guardado');
+  };
+
+  const handleToggleQrMenuPin = (enabled: boolean): boolean => {
+    if (!currentBiz) return false;
+    if (enabled && !currentBiz.pinAccesoMenu?.trim()) {
+      setPinMenuInput('');
+      setPinError(null);
+      setEnablePinAfterSave(true);
+      setShowEditPinModal(true);
+      return false;
+    }
+
+    const updatedBiz = { ...currentBiz, requierePinMenu: enabled };
+    const result = saveBusiness(updatedBiz, currentUser);
+    if (!result.success) {
+      window.alert(result.error || 'No se pudo cambiar el acceso al menú.');
+      return false;
+    }
+
+    setBusinessRefreshKey((key) => key + 1);
+    triggerFeedback(enabled ? 'Menú protegido con PIN y cuenta de cliente' : 'Menú habilitado como público');
+    return true;
   };
 
   // Eliminar platillo
@@ -1263,6 +1303,13 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
         <QRCodeDisplay
           business={currentBiz}
           onNavigateToPublicMenu={() => onSelectCafe(currentBiz.slug)}
+          onToggleMenuPin={handleToggleQrMenuPin}
+          onEditMenuPin={() => {
+            setPinMenuInput(currentBiz.pinAccesoMenu || '2026');
+            setPinError(null);
+            setEnablePinAfterSave(false);
+            setShowEditPinModal(true);
+          }}
         />
       )}
 
@@ -1757,18 +1804,21 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
             <form onSubmit={handleSaveMenuPin} className="space-y-3">
               <div>
                 <label className="block text-xs font-semibold text-stone-700 mb-1">
-                  PIN de acceso (mínimo 3 caracteres o números)
+                  PIN de acceso (4 dígitos)
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="Ej. 2026 o COPAN1"
+                  inputMode="numeric"
+                  maxLength={4}
+                  pattern="[0-9]{4}"
+                  placeholder="••••"
                   value={pinMenuInput}
-                  onChange={(e) => setPinMenuInput(e.target.value)}
+                  onChange={(e) => setPinMenuInput(e.target.value.replace(/\D/g, '').slice(0, 4))}
                   className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-base font-mono font-black text-amber-900 text-center tracking-widest focus:outline-none focus:ring-1 focus:ring-amber-600"
                 />
                 <p className="text-[11px] text-stone-400 mt-1">
-                  Este PIN se imprimirá automáticamente en tu afiche QR para las mesas o mostrador.
+                  Comparte este PIN solo con tus clientes. El afiche QR lo mostrará únicamente cuando el acceso esté protegido.
                 </p>
               </div>
 
@@ -1781,7 +1831,10 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
               <div className="flex justify-end gap-2 pt-3 border-t border-stone-100">
                 <button
                   type="button"
-                  onClick={() => setShowEditPinModal(false)}
+                  onClick={() => {
+                    setShowEditPinModal(false);
+                    setEnablePinAfterSave(false);
+                  }}
                   className="px-4 py-2 text-xs text-stone-600 hover:text-stone-900 font-medium"
                 >
                   Cancelar

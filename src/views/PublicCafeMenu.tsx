@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Coffee,
   ShoppingBag,
@@ -82,6 +82,7 @@ export const PublicCafeMenu: React.FC<PublicCafeMenuProps> = ({
     if (currentUser?.role === 'superadmin') return true;
     if (currentUser?.role === 'dueno' && business.ownerId === currentUser.id) return true;
     if (!businessRequiresMenuPin(business)) return true;
+    if (currentUser?.role !== 'cliente') return false;
     try {
       return sessionStorage.getItem(`yasta_unlocked_menu_${business.id}`) === 'true';
     } catch {
@@ -92,7 +93,40 @@ export const PublicCafeMenu: React.FC<PublicCafeMenuProps> = ({
   const [showMenuPin, setShowMenuPin] = useState(false);
   const [menuPinError, setMenuPinError] = useState<string | null>(null);
 
+  useEffect(() => {
+    const pinRequired = businessRequiresMenuPin(business);
+    const isOwnerOrAdmin = currentUser?.role === 'superadmin' ||
+      (currentUser?.role === 'dueno' && business.ownerId === currentUser.id);
+
+    if (!pinRequired || isOwnerOrAdmin) {
+      setIsMenuUnlocked(true);
+      return;
+    }
+
+    if (currentUser?.role !== 'cliente') {
+      setIsMenuUnlocked(false);
+      return;
+    }
+
+    try {
+      setIsMenuUnlocked(sessionStorage.getItem(`yasta_unlocked_menu_${business.id}`) === 'true');
+    } catch {
+      setIsMenuUnlocked(false);
+    }
+  }, [business.id, business.ownerId, business.requierePinMenu, business.pinAccesoMenu, currentUser?.id, currentUser?.role]);
+
+  const menuPinRequired = businessRequiresMenuPin(business);
+  const canBypassMenuPin = currentUser?.role === 'superadmin' ||
+    (currentUser?.role === 'dueno' && business.ownerId === currentUser.id);
+  const requiresCustomerLogin = menuPinRequired && !canBypassMenuPin && currentUser?.role !== 'cliente';
+  const isMenuBlocked = menuPinRequired && !canBypassMenuPin &&
+    (currentUser?.role !== 'cliente' || !isMenuUnlocked);
+
   const handleUnlockMenu = (pinToTest?: string) => {
+    if (currentUser?.role !== 'cliente') {
+      setMenuPinError('Inicia sesión con una cuenta de cliente antes de ingresar el PIN del local.');
+      return;
+    }
     const pin = (pinToTest ?? menuPinInput).trim();
     if (!pin) {
       setMenuPinError('Por favor ingresa el PIN de 4 dígitos proporcionado por el local.');
@@ -386,7 +420,7 @@ export const PublicCafeMenu: React.FC<PublicCafeMenuProps> = ({
       )}
 
       {/* Candado / PIN de Acceso por Fidelidad al Menú */}
-      {!isMenuUnlocked ? (
+      {isMenuBlocked ? (
         <div className="bg-white rounded-3xl border border-amber-200/80 shadow-md p-6 sm:p-10 max-w-xl mx-auto text-center space-y-6">
           <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-800 mx-auto flex items-center justify-center border border-amber-200 shadow-xs">
             <Lock className="w-8 h-8" />
@@ -398,21 +432,56 @@ export const PublicCafeMenu: React.FC<PublicCafeMenuProps> = ({
               Menú Exclusivo para Clientes
             </span>
             <h2 className="text-xl sm:text-2xl font-black text-stone-900 tracking-tight">
-              Ingresa el PIN de fidelidad del local
+              {requiresCustomerLogin ? 'Inicia sesión para ver el menú' : 'Ingresa el PIN de acceso del local'}
             </h2>
             <p className="text-xs sm:text-sm text-stone-600 max-w-md mx-auto leading-relaxed">
-              Para consultar los platillos y precios de <strong className="text-stone-900">{business.nombre}</strong>, ingresa el PIN de 4 dígitos proporcionado por el dueño o personal del establecimiento.
+              {requiresCustomerLogin
+                ? <>Para ver el menú de <strong className="text-stone-900">{business.nombre}</strong>, necesitas una cuenta de cliente de Yasta. Después de ingresar, escribe el PIN que te proporcionó el local.</>
+                : <>Ingresa el PIN de 4 dígitos proporcionado por el dueño o personal de <strong className="text-stone-900">{business.nombre}</strong>.</>}
             </p>
           </div>
 
-          {/* Formulario de desbloqueo */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleUnlockMenu();
-            }}
-            className="space-y-4 max-w-xs mx-auto"
-          >
+          {requiresCustomerLogin ? (
+            currentUser ? (
+              <p className="max-w-sm mx-auto rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                La sesión activa no es de cliente. Cierra sesión e ingresa con una cuenta de cliente para continuar.
+              </p>
+            ) : (
+              <div className="flex flex-col sm:flex-row gap-3 max-w-sm mx-auto">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode('login');
+                    setAuthError(null);
+                    setShowAuthModal(true);
+                  }}
+                  className="flex-1 py-3 px-4 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-sm font-bold transition-colors"
+                >
+                  Ingresar como cliente
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode('registro');
+                    setAuthError(null);
+                    setShowAuthModal(true);
+                  }}
+                  className="flex-1 py-3 px-4 bg-amber-700 hover:bg-amber-800 text-white rounded-xl text-sm font-bold transition-colors"
+                >
+                  Crear cuenta
+                </button>
+              </div>
+            )
+          ) : (
+            <>
+              {/* Formulario de desbloqueo */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleUnlockMenu();
+                }}
+                className="space-y-4 max-w-xs mx-auto"
+              >
             <div className="relative">
               <label htmlFor="menu-pin-input" className="sr-only">
                 PIN de acceso de 4 dígitos
@@ -454,14 +523,16 @@ export const PublicCafeMenu: React.FC<PublicCafeMenuProps> = ({
               <Unlock className="w-4 h-4" />
               Desbloquear Menú
             </button>
-          </form>
+              </form>
 
-          {/* Información del PIN de fidelidad */}
-          <div className="pt-4 border-t border-stone-100 space-y-1 text-center">
-            <p className="text-xs text-stone-500">
-              Solicita tu PIN de acceso exclusivo al personal de caja o búscalo en el afiche de tu mesa.
-            </p>
-          </div>
+              {/* Información del PIN de fidelidad */}
+              <div className="pt-4 border-t border-stone-100 space-y-1 text-center">
+                <p className="text-xs text-stone-500">
+                  Solicita tu PIN de acceso exclusivo al personal de caja o búscalo en el afiche de tu mesa.
+                </p>
+              </div>
+            </>
+          )}
         </div>
       ) : (
         <>
