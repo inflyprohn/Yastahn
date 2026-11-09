@@ -768,8 +768,8 @@ export function updateBusinessMenuPin(
   }
 
   const cleanPin = nuevoPin.trim();
-  if (cleanPin.length < 3) {
-    return { success: false, error: 'El PIN de acceso debe tener al menos 3 caracteres o dígitos.' };
+  if (!/^\d{4}$/.test(cleanPin)) {
+    return { success: false, error: 'El PIN de acceso debe tener exactamente 4 dígitos.' };
   }
 
   business.pinAccesoMenu = cleanPin;
