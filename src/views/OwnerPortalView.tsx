@@ -47,6 +47,7 @@ import {
   addBusinessCategory,
   cancelOrder,
   deleteBusinessCategory,
+  deleteClientProfile,
   deleteMenuItem,
   getBusinessCategories,
   getBusinessClientsWithAccounts,
@@ -88,6 +89,7 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
   onUserUpdated,
 }) => {
   const [businessRefreshKey, setBusinessRefreshKey] = useState(0);
+  const [clientsRefreshKey, setClientsRefreshKey] = useState(0);
   // Negocios que posee este dueño (soporta multi-negocio)
   const ownedBusinesses = useMemo(() => {
     return getBusinessesForOwner(currentUser.id);
@@ -121,7 +123,7 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
   const clientsWithAccounts = useMemo(() => {
     if (!currentBiz) return [];
     return getBusinessClientsWithAccounts(currentBiz.id, currentUser);
-  }, [currentBiz, currentUser]);
+  }, [currentBiz, currentUser, clientsRefreshKey]);
 
   // Movimientos financieros del negocio
   const movements = useMemo(() => {
@@ -471,6 +473,23 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
   const handleToggleFinDeMes = (clienteId: string, currentVal: boolean) => {
     togglePagoFinDeMes(clienteId, currentBiz.id, !currentVal, currentUser);
     triggerFeedback(`Pago a fin de mes ${!currentVal ? 'habilitado' : 'deshabilitado'} para el cliente`);
+  };
+
+  const handleDeleteClientProfile = (clienteId: string, clienteNombre: string) => {
+    if (!currentBiz) return;
+    const confirmed = window.confirm(
+      `¿Eliminar el perfil de ${clienteNombre}? Se borrará su cuenta de Yasta y podrá registrarse de nuevo con el mismo número. Solo se permite si no tiene pedidos, movimientos contables, casos de soporte, saldo pendiente ni cuenta asociada a otro negocio.`
+    );
+    if (!confirmed) return;
+
+    const result = deleteClientProfile(clienteId, currentBiz.id, currentUser);
+    if (!result.success) {
+      window.alert(result.error || 'No se pudo eliminar el perfil del cliente.');
+      return;
+    }
+
+    setClientsRefreshKey((key) => key + 1);
+    triggerFeedback('Perfil eliminado. El cliente puede registrarse de nuevo con su número.');
   };
 
   // Registrar abono a cuenta de cliente
@@ -1180,6 +1199,16 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
                       Ajuste
                     </button>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteClientProfile(user.id, user.nombre)}
+                    aria-label={`Eliminar perfil de ${user.nombre}`}
+                    className="w-full flex items-center justify-center gap-2 py-2 border border-rose-200 text-rose-700 hover:bg-rose-50 rounded-xl text-xs font-semibold transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Eliminar perfil
+                  </button>
                 </div>
               );
             })}
