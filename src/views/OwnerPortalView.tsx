@@ -68,6 +68,7 @@ import {
 } from '../services/storage';
 import { QRCodeDisplay } from '../components/QRCodeDisplay';
 import { UserAvatar } from '../components/UserAvatar';
+import { AvatarModal } from '../components/AvatarModal';
 import baleadaEspecial from '../assets/images/baleada_especial_1793908264377.jpg';
 import desayunoTipico from '../assets/images/desayuno_tipico_hn_1793908266298.jpg';
 import polloChuco from '../assets/images/pollo_chuco_honduras_1793909291520.jpg';
@@ -75,34 +76,33 @@ import cafePourover from '../assets/images/cafe_pourover_honduras_1793909290813.
 
 interface OwnerPortalViewProps {
   currentUser: User;
-  currentRoute: string;
+  onNavigate: (route: string) => void;
   onSelectCafe: (slug: string) => void;
+  onUserUpdated: (user: User) => void;
 }
 
 export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
   currentUser,
-  currentRoute,
+  onNavigate,
   onSelectCafe,
+  onUserUpdated,
 }) => {
+  const [businessRefreshKey, setBusinessRefreshKey] = useState(0);
   // Negocios que posee este dueño (soporta multi-negocio)
   const ownedBusinesses = useMemo(() => {
     return getBusinessesForOwner(currentUser.id);
-  }, [currentUser.id]);
+  }, [currentUser.id, businessRefreshKey]);
 
   const [selectedBizId, setSelectedBizId] = useState<string>(
     ownedBusinesses[0]?.id || ''
   );
   const currentBiz = ownedBusinesses.find((b) => b.id === selectedBizId) || ownedBusinesses[0];
 
-  const sectionByRoute: Record<string, 'pedidos' | 'menu' | 'clientes' | 'qr'> = {
-    '/dueno': 'pedidos',
-    '/dueno/pedidos': 'pedidos',
-    '/dueno/menu': 'menu',
-    '/dueno/cuentas': 'clientes',
-    '/dueno/qr': 'qr',
-  };
-  const activeSection = sectionByRoute[currentRoute] || 'pedidos';
+  const [activeTab, setActiveTab] = useState<
+    'pedidos' | 'menu' | 'clientes' | 'qr' | 'perfil'
+  >('pedidos');
 
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
   // Pedidos del negocio seleccionado
@@ -199,6 +199,8 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
   const [editBizTel, setEditBizTel] = useState('');
   const [editBizLogo, setEditBizLogo] = useState('');
   const [editBizBanner, setEditBizBanner] = useState('');
+  const [editBizRequiresPin, setEditBizRequiresPin] = useState(false);
+  const [editBizPinError, setEditBizPinError] = useState<string | null>(null);
 
   const openEditBizModal = () => {
     if (!currentBiz) return;
@@ -209,12 +211,22 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
     setEditBizTel(currentBiz.telefono);
     setEditBizLogo(currentBiz.logoUrl || '');
     setEditBizBanner(currentBiz.bannerUrl || '');
+    setEditBizRequiresPin(
+      typeof currentBiz.requierePinMenu === 'boolean'
+        ? currentBiz.requierePinMenu
+        : Boolean(currentBiz.pinAccesoMenu?.trim())
+    );
+    setEditBizPinError(null);
     setShowEditBizModal(true);
   };
 
   const handleSaveEditBusiness = (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentBiz) return;
+    if (editBizRequiresPin && !currentBiz.pinAccesoMenu?.trim()) {
+      setEditBizPinError('Antes de activar el requisito, configura un PIN en la pestaña “Menú y Platillos”.');
+      return;
+    }
     const updatedBiz: Business = {
       ...currentBiz,
       nombre: editBizName.trim(),
@@ -224,10 +236,12 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
       telefono: editBizTel.trim(),
       logoUrl: editBizLogo.trim(),
       bannerUrl: editBizBanner.trim(),
+      requierePinMenu: editBizRequiresPin,
     };
     const res = saveBusiness(updatedBiz, currentUser);
     if (res.success) {
       setShowEditBizModal(false);
+      setBusinessRefreshKey((key) => key + 1);
       triggerFeedback(`Información de "${updatedBiz.nombre}" actualizada`);
     } else {
       alert(res.error || 'Error al guardar cambios del negocio');
@@ -442,6 +456,7 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
     }
     triggerFeedback(`PIN de fidelidad actualizado a "${pinMenuInput}"`);
     setShowEditPinModal(false);
+    setBusinessRefreshKey((key) => key + 1);
   };
 
   // Eliminar platillo
@@ -592,6 +607,13 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
               role="dueno"
               size="xl"
             />
+            <button
+              onClick={() => setShowAvatarModal(true)}
+              className="absolute bottom-0 right-0 p-1.5 bg-stone-900 text-white rounded-full shadow-md hover:bg-stone-800 transition-colors"
+              title="Cambiar foto de perfil del dueño"
+            >
+              <Camera className="w-3.5 h-3.5" />
+            </button>
           </div>
 
           <div>
@@ -645,8 +667,55 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
         </div>
       </div>
 
-      {/* ================= PÁGINA: PEDIDOS EN VIVO ================= */}
-      {activeSection === 'pedidos' && (
+      {/* Barra de Pestañas del Panel de Dueño */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-stone-200 scrollbar-none">
+        <button
+          onClick={() => setActiveTab('pedidos')}
+          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold font-orlando tracking-wide whitespace-nowrap shrink-0 transition-colors ${
+            activeTab === 'pedidos'
+              ? 'bg-stone-900 text-white shadow-xs'
+              : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+          }`}
+        >
+          Pedidos en Vivo ({orders.filter((o) => o.estadoPedido !== 'entregado').length})
+        </button>
+
+        <button
+          onClick={() => setActiveTab('menu')}
+          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold font-orlando tracking-wide whitespace-nowrap shrink-0 transition-colors ${
+            activeTab === 'menu'
+              ? 'bg-stone-900 text-white shadow-xs'
+              : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+          }`}
+        >
+          Menú y Platillos ({menuItems.length})
+        </button>
+
+        <button
+          onClick={() => setActiveTab('clientes')}
+          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold font-orlando tracking-wide whitespace-nowrap shrink-0 transition-colors ${
+            activeTab === 'clientes'
+              ? 'bg-stone-900 text-white shadow-xs'
+              : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+          }`}
+        >
+          Clientes y Fin de Mes ({clientsWithAccounts.length})
+        </button>
+
+        <button
+          onClick={() => setActiveTab('qr')}
+          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold font-orlando tracking-wide whitespace-nowrap shrink-0 transition-colors ${
+            activeTab === 'qr'
+              ? 'bg-stone-900 text-white shadow-xs'
+              : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+          }`}
+        >
+          Mi negocio → Código QR
+        </button>
+      </div>
+
+      {/* ================= PESTAÑA: PEDIDOS EN VIVO ================= */}
+      {activeTab === 'pedidos' && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-stone-900">
@@ -851,8 +920,8 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
         </div>
       )}
 
-      {/* ================= PÁGINA: MENÚ Y PLATILLOS ================= */}
-      {activeSection === 'menu' && (
+      {/* ================= PESTAÑA: MENÚ Y PLATILLOS ================= */}
+      {activeTab === 'menu' && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -1019,8 +1088,8 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
         </div>
       )}
 
-      {/* ================= PÁGINA: CLIENTES Y FIN DE MES ================= */}
-      {activeSection === 'clientes' && (
+      {/* ================= PESTAÑA: CLIENTES Y FIN DE MES ================= */}
+      {activeTab === 'clientes' && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
@@ -1160,8 +1229,8 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
         </div>
       )}
 
-      {/* ================= PÁGINA: CÓDIGO QR ================= */}
-      {activeSection === 'qr' && (
+      {/* ================= PESTAÑA: CÓDIGO QR ================= */}
+      {activeTab === 'qr' && (
         <QRCodeDisplay
           business={currentBiz}
           onNavigateToPublicMenu={() => onSelectCafe(currentBiz.slug)}
@@ -1815,6 +1884,43 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
                 />
               </div>
 
+              <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-bold text-stone-900">Exigir PIN para ver el menú</p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-stone-600">
+                      {editBizRequiresPin
+                        ? 'Los clientes ingresarán el PIN del local antes de ver los platillos.'
+                        : 'Los clientes podrán abrir el menú sin ingresar un PIN.'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={editBizRequiresPin}
+                    aria-label="Exigir PIN para ver el menú"
+                    onClick={() => {
+                      setEditBizRequiresPin((enabled) => !enabled);
+                      setEditBizPinError(null);
+                    }}
+                    className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-600 focus:ring-offset-2 ${
+                      editBizRequiresPin ? 'bg-amber-800' : 'bg-stone-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                        editBizRequiresPin ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+                {editBizPinError && (
+                  <p role="alert" className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] font-medium text-rose-800">
+                    {editBizPinError}
+                  </p>
+                )}
+              </div>
+
               <div className="flex justify-end gap-2 pt-3 border-t border-stone-100">
                 <button
                   type="button"
@@ -1894,6 +2000,22 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
         </div>
       )}
 
+      {/* Modal de Perfil y Foto */}
+      <AvatarModal
+        user={currentUser}
+        isOpen={showAvatarModal}
+        onClose={() => setShowAvatarModal(false)}
+        onAvatarUpdated={(newAvatar, newName) => {
+          onUserUpdated({
+            ...currentUser,
+            avatarUrl: newAvatar,
+            nombre: newName || currentUser.nombre,
+          });
+        }}
+        onUserUpdated={(updatedUser) => {
+          onUserUpdated(updatedUser);
+        }}
+      />
     </div>
   );
 };

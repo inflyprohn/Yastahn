@@ -1,7 +1,7 @@
 import React from 'react';
 import { Coffee, ArrowRight, QrCode, ShoppingBag, Shield, Clock, MapPin, Phone, KeyRound, Store, UserRound } from 'lucide-react';
 import { Business, User } from '../types';
-import { getBusinesses } from '../services/storage';
+import { businessRequiresMenuPin, getBusinesses } from '../services/storage';
 import heroHonduranCafe from '../assets/images/hero_honduran_cafe_1793908265168.jpg';
 
 interface LandingViewProps {
@@ -239,12 +239,18 @@ export const LandingView: React.FC<LandingViewProps> = ({
                       </div>
                     </div>
 
-                    {/* Badge de Fidelidad y PIN requerido */}
+                    {/* Indica si el dueño exige PIN para abrir el menú */}
                     <div className="pt-2.5 border-t border-stone-100 flex items-center justify-between text-[11px]">
-                      <div className="flex items-center gap-1.5 text-amber-900 font-medium bg-amber-50/80 px-2 py-0.5 rounded-lg border border-amber-200/60">
-                        <KeyRound className="w-3 h-3 text-amber-700 shrink-0" />
-                        <span>Requiere PIN del local</span>
-                      </div>
+                      {businessRequiresMenuPin(biz) ? (
+                        <div className="flex items-center gap-1.5 text-amber-900 font-medium bg-amber-50/80 px-2 py-0.5 rounded-lg border border-amber-200/60">
+                          <KeyRound className="w-3 h-3 text-amber-700 shrink-0" />
+                          <span>Requiere PIN del local</span>
+                        </div>
+                      ) : (
+                        <span className="text-emerald-800 font-medium bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200/60">
+                          Menú de acceso directo
+                        </span>
+                      )}
                       <span className="text-stone-400 text-[10px]">
                         Acceso clientes
                       </span>

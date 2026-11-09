@@ -27,6 +27,7 @@ import { Business, MenuItem, OrderItemSnapshot, PaymentMethod, User } from '../t
 import { SecretVisibilityToggle } from '../components/SecretVisibilityToggle';
 import { formatHNL, formatHondurasPhone, isValidHondurasPhone, isValidPIN } from '../utils/formatters';
 import {
+  businessRequiresMenuPin,
   createOrder,
   getBusinessCategories,
   getClientAccount,
@@ -80,7 +81,7 @@ export const PublicCafeMenu: React.FC<PublicCafeMenuProps> = ({
   const [isMenuUnlocked, setIsMenuUnlocked] = useState<boolean>(() => {
     if (currentUser?.role === 'superadmin') return true;
     if (currentUser?.role === 'dueno' && business.ownerId === currentUser.id) return true;
-    if (!business.pinAccesoMenu || business.pinAccesoMenu.trim() === '') return true;
+    if (!businessRequiresMenuPin(business)) return true;
     try {
       return sessionStorage.getItem(`yasta_unlocked_menu_${business.id}`) === 'true';
     } catch {
@@ -469,10 +470,12 @@ export const PublicCafeMenu: React.FC<PublicCafeMenuProps> = ({
             <div className="flex items-center gap-2 font-medium">
               <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0" />
               <span>
-                Menú desbloqueado con PIN de cliente de <strong>{business.nombre}</strong>
+                {businessRequiresMenuPin(business)
+                  ? <>Menú desbloqueado con el PIN de <strong>{business.nombre}</strong></>
+                  : <>Menú disponible para clientes de <strong>{business.nombre}</strong></>}
               </span>
             </div>
-            {business.pinAccesoMenu && (
+            {businessRequiresMenuPin(business) && (
               <button
                 onClick={handleLockAgain}
                 className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 hover:text-emerald-950 underline cursor-pointer"
