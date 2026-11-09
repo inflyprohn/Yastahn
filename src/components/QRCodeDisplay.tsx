@@ -1,21 +1,26 @@
 import React, { useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
-import { Copy, Download, Printer, Check, ExternalLink, QrCode as QrIcon } from 'lucide-react';
+import { Copy, Download, Printer, Check, ExternalLink, KeyRound, QrCode as QrIcon } from 'lucide-react';
 import { Business } from '../types';
 import { businessRequiresMenuPin } from '../services/storage';
 
 interface QRCodeDisplayProps {
   business: Business;
   onNavigateToPublicMenu?: () => void;
+  onToggleMenuPin: (enabled: boolean) => void;
+  onEditMenuPin: () => void;
 }
 
 export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
   business,
   onNavigateToPublicMenu,
+  onToggleMenuPin,
+  onEditMenuPin,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [copied, setCopied] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);
+  const menuPinEnabled = businessRequiresMenuPin(business);
 
   // Determinar la URL pública: configurable con PUBLIC_APP_URL en prod o window.location.origin en preview
   const appOrigin =
@@ -108,6 +113,62 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
         )}
       </div>
 
+      <section className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 sm:p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white border border-amber-200 text-amber-800 flex items-center justify-center shrink-0">
+                <KeyRound className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-stone-900">Acceso al menú con PIN</h4>
+                <p className="text-xs text-stone-600 mt-1">
+                  {menuPinEnabled
+                    ? 'Protegido: la persona debe iniciar sesión con una cuenta de cliente y escribir el PIN del local.'
+                    : 'Público: cualquier persona que abra el enlace o escanee el QR puede ver el menú.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <span className="font-semibold text-stone-700">PIN del negocio:</span>
+              <span className="font-mono font-black tracking-[0.2em] text-amber-950 bg-white border border-amber-200 rounded-lg px-3 py-1.5">
+                {business.pinAccesoMenu?.trim() || 'Sin configurar'}
+              </span>
+              <button
+                type="button"
+                onClick={onEditMenuPin}
+                className="font-semibold text-amber-900 hover:text-amber-950 underline underline-offset-2"
+              >
+                {business.pinAccesoMenu?.trim() ? 'Cambiar PIN' : 'Configurar PIN'}
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between sm:justify-end gap-3 border-t border-amber-200/70 sm:border-0 pt-3 sm:pt-0">
+            <span className={`text-xs font-bold ${menuPinEnabled ? 'text-amber-900' : 'text-stone-600'}`}>
+              {menuPinEnabled ? 'Protegido' : 'Público'}
+            </span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={menuPinEnabled}
+              aria-label="Exigir inicio de sesión de cliente y PIN para ver el menú"
+              onClick={() => onToggleMenuPin(!menuPinEnabled)}
+              className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-600 focus:ring-offset-2 ${
+                menuPinEnabled ? 'bg-amber-800' : 'bg-stone-300'
+              }`}
+            >
+              <span
+                className={`inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                  menuPinEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+      </section>
+
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
         {/* Canvas QR Real */}
         <div className="md:col-span-5 flex flex-col items-center justify-center p-6 bg-stone-50 rounded-2xl border border-stone-200/80">
@@ -153,19 +214,6 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
               Los clientes que escaneen este código verán únicamente el catálogo, precios y pedidos de este negocio.
             </p>
           </div>
-
-          {/* PIN de fidelidad para ver el menú */}
-          {businessRequiresMenuPin(business) && business.pinAccesoMenu && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex items-center justify-between gap-3 text-xs">
-              <div>
-                <span className="font-bold text-amber-950 block">PIN de fidelidad de este local:</span>
-                <span className="text-[11px] text-stone-600">Proporcione este PIN a sus clientes para que puedan desbloquear y ver el menú.</span>
-              </div>
-              <span className="font-mono text-base font-black text-amber-900 bg-white px-3.5 py-1.5 rounded-xl border border-amber-300 tracking-widest shrink-0 shadow-xs">
-                {business.pinAccesoMenu}
-              </span>
-            </div>
-          )}
 
           {/* Botones de descarga e impresión */}
           <div className="flex flex-wrap items-center gap-3 pt-2">
