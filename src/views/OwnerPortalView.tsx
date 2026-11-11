@@ -71,6 +71,7 @@ import {
 import { QRCodeDisplay } from '../components/QRCodeDisplay';
 import { UserAvatar } from '../components/UserAvatar';
 import { AvatarModal } from '../components/AvatarModal';
+import { optimizeImageForStorage } from '../utils/imageProcessing';
 import baleadaEspecial from '../assets/images/baleada_especial_1793908264377.jpg';
 import desayunoTipico from '../assets/images/desayuno_tipico_hn_1793908266298.jpg';
 import polloChuco from '../assets/images/pollo_chuco_honduras_1793909291520.jpg';
@@ -203,6 +204,10 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
   const [editBizTel, setEditBizTel] = useState('');
   const [editBizLogo, setEditBizLogo] = useState('');
   const [editBizBanner, setEditBizBanner] = useState('');
+  const [businessImageError, setBusinessImageError] = useState<string | null>(null);
+  const [isProcessingBusinessImage, setIsProcessingBusinessImage] = useState(false);
+  const logoFileInputRef = useRef<HTMLInputElement>(null);
+  const bannerFileInputRef = useRef<HTMLInputElement>(null);
   const [editBizRequiresPin, setEditBizRequiresPin] = useState(false);
   const [editBizPinError, setEditBizPinError] = useState<string | null>(null);
 
@@ -215,6 +220,7 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
     setEditBizTel(currentBiz.telefono);
     setEditBizLogo(currentBiz.logoUrl || '');
     setEditBizBanner(currentBiz.bannerUrl || '');
+    setBusinessImageError(null);
     setEditBizRequiresPin(
       typeof currentBiz.requierePinMenu === 'boolean'
         ? currentBiz.requierePinMenu
@@ -224,9 +230,52 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
     setShowEditBizModal(true);
   };
 
+  const handleBusinessImageChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+    imageType: 'logo' | 'banner'
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setBusinessImageError(null);
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      setBusinessImageError(validation.error || 'No se pudo validar la imagen.');
+      event.target.value = '';
+      return;
+    }
+    if (file.type !== 'image/jpeg') {
+      setBusinessImageError('Para el logo y el banner, selecciona una imagen JPG o JPEG.');
+      event.target.value = '';
+      return;
+    }
+
+    setIsProcessingBusinessImage(true);
+    try {
+      const optimizedImage = await optimizeImageForStorage(
+        file,
+        imageType === 'logo' ? 640 : 1600,
+        imageType === 'logo' ? 350 * 1024 : 900 * 1024
+      );
+      if (imageType === 'logo') setEditBizLogo(optimizedImage);
+      else setEditBizBanner(optimizedImage);
+    } catch (error) {
+      setBusinessImageError(
+        error instanceof Error ? error.message : 'No se pudo procesar la imagen.'
+      );
+    } finally {
+      setIsProcessingBusinessImage(false);
+      event.target.value = '';
+    }
+  };
+
   const handleSaveEditBusiness = (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentBiz) return;
+    if (isProcessingBusinessImage) {
+      setBusinessImageError('Espera a que termine el procesamiento de la imagen.');
+      return;
+    }
     if (editBizRequiresPin && !currentBiz.pinAccesoMenu?.trim()) {
       setEditBizPinError('Antes de activar el requisito, configura un PIN en la pestaña “Menú y Platillos”.');
       return;
@@ -1938,33 +1987,70 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
                     className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs"
                   />
                 </div>
+              </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-stone-700 mb-1">
-                    Foto o Logo (URL o Muestra)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="https://..."
-                    value={editBizLogo}
-                    onChange={(e) => setEditBizLogo(e.target.value)}
-                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs"
-                  />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="block text-xs font-semibold text-stone-700">Logo del negocio (JPG)</label>
+                  <div className="flex items-center gap-3">
+                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-stone-200 bg-stone-50 flex items-center justify-center">
+                      {editBizLogo ? (
+                        <img src={editBizLogo} alt="Vista previa del logo" className="h-full w-full object-cover" />
+                      ) : (
+                        <Store className="h-6 w-6 text-stone-300" />
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <input
+                        ref={logoFileInputRef}
+                        type="file"
+                        accept=".jpg,.jpeg,image/jpeg"
+                        onChange={(event) => void handleBusinessImageChange(event, 'logo')}
+                        className="hidden"
+                      />
+                      <button type="button" onClick={() => logoFileInputRef.current?.click()} disabled={isProcessingBusinessImage} className="rounded-xl bg-stone-900 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">
+                        {editBizLogo ? 'Cambiar logo' : 'Subir logo'}
+                      </button>
+                      {editBizLogo && <button type="button" onClick={() => setEditBizLogo('')} className="rounded-xl border border-stone-200 px-3 py-2 text-xs font-semibold text-stone-700">Quitar</button>}
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-stone-500">JPG/JPEG, máximo 2 MB. Se ajusta para la plataforma.</p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-xs font-semibold text-stone-700">Foto de portada / banner (JPG)</label>
+                  <div className="space-y-2">
+                    <div className="h-20 w-full overflow-hidden rounded-xl border border-stone-200 bg-stone-50 flex items-center justify-center">
+                      {editBizBanner ? (
+                        <img src={editBizBanner} alt="Vista previa del banner" className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="text-xs text-stone-400">Sin banner</span>
+                      )}
+                    </div>
+                    <input
+                      ref={bannerFileInputRef}
+                      type="file"
+                      accept=".jpg,.jpeg,image/jpeg"
+                      onChange={(event) => void handleBusinessImageChange(event, 'banner')}
+                      className="hidden"
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      <button type="button" onClick={() => bannerFileInputRef.current?.click()} disabled={isProcessingBusinessImage} className="rounded-xl bg-stone-900 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">
+                        {editBizBanner ? 'Cambiar banner' : 'Subir banner'}
+                      </button>
+                      {editBizBanner && <button type="button" onClick={() => setEditBizBanner('')} className="rounded-xl border border-stone-200 px-3 py-2 text-xs font-semibold text-stone-700">Quitar</button>}
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-stone-500">JPG/JPEG, máximo 2 MB. Se ajusta para la portada.</p>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-stone-700 mb-1">
-                  Foto de Portada / Banner (URL)
-                </label>
-                <input
-                  type="text"
-                  placeholder="https://..."
-                  value={editBizBanner}
-                  onChange={(e) => setEditBizBanner(e.target.value)}
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs"
-                />
-              </div>
+              {businessImageError && (
+                <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] text-rose-800">
+                  {businessImageError}
+                </p>
+              )}
+              {isProcessingBusinessImage && <p className="text-[11px] text-amber-800">Procesando imagen…</p>}
 
               <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
                 <div className="flex items-center justify-between gap-4">
@@ -2013,6 +2099,7 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
                 </button>
                 <button
                   type="submit"
+                  disabled={isProcessingBusinessImage}
                   className="px-5 py-2.5 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shadow-xs"
                 >
                   Guardar Información
