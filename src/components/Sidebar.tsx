@@ -8,11 +8,20 @@ import {
   Shield,
   ChevronLeft,
   ChevronRight,
+  User as UserIcon,
+  LogOut,
+  Camera,
+  CheckCircle2,
+  Clock,
+  Settings,
+  Sparkles,
   QrCode,
 } from 'lucide-react';
 import { User } from '../types';
+import { UserAvatar } from './UserAvatar';
+import { setCurrentUser } from '../services/storage';
 
-type SidebarNavItem = {
+interface SidebarNavigationItem {
   id: string;
   label: string;
   shortLabel: string;
@@ -20,14 +29,16 @@ type SidebarNavItem = {
   route: string;
   isActive: boolean;
   description: string;
-};
+}
 
 interface SidebarProps {
   currentUser: User | null;
   currentRoute: string;
   onNavigate: (route: string) => void;
+  onUserChanged: (user: User | null) => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+  onOpenAvatarModal: () => void;
   mobileOpen: boolean;
   onCloseMobile: () => void;
 }
@@ -36,131 +47,71 @@ export const Sidebar: React.FC<SidebarProps> = ({
   currentUser,
   currentRoute,
   onNavigate,
+  onUserChanged,
   isCollapsed,
   onToggleCollapse,
+  onOpenAvatarModal,
   mobileOpen,
   onCloseMobile,
 }) => {
-  // El dueño navega cada sección desde una ruta independiente.
-  const exploreItem: SidebarNavItem = {
-    id: 'explorar',
-    label: 'Explorar Cafeterías',
-    shortLabel: 'Inicio',
-    icon: Store,
-    route: '/',
-    isActive: currentRoute === '/' || currentRoute.startsWith('/c/'),
-    description: 'Menús y pedidos para recoger',
+  const handleLogout = () => {
+    setCurrentUser(null);
+    onUserChanged(null);
+    onNavigate('/');
+    onCloseMobile();
   };
 
-  const navItems: SidebarNavItem[] = currentUser?.role === 'dueno'
-    ? [
-        exploreItem,
-        {
-          id: 'pedidos',
-          label: 'Pedidos en Vivo',
-          shortLabel: 'Pedidos',
-          icon: ShoppingBag,
-          route: '/dueno/pedidos',
-          isActive: currentRoute === '/dueno' || currentRoute === '/dueno/pedidos',
-          description: 'Estado de preparación en barra',
-        },
-        {
-          id: 'menu',
-          label: 'Menú y Platillos',
-          shortLabel: 'Menú',
-          icon: Store,
-          route: '/dueno/menu',
-          isActive: currentRoute === '/dueno/menu',
-          description: 'Administra categorías y platillos',
-        },
-        {
-          id: 'cuentas',
-          label: 'Clientes y Fin de Mes',
-          shortLabel: 'Clientes',
-          icon: Receipt,
-          route: '/dueno/cuentas',
-          isActive: currentRoute === '/dueno/cuentas',
-          description: 'Saldos, crédito y abonos',
-        },
-        {
-          id: 'qr',
-          label: 'Código QR del negocio',
-          shortLabel: 'Código QR',
-          icon: QrCode,
-          route: '/dueno/qr',
-          isActive: currentRoute === '/dueno/qr',
-          description: 'Comparte el menú de tu local',
-        },
-        {
-          id: 'soporte',
-          label: 'Soporte y Casos',
-          shortLabel: 'Soporte',
-          icon: MessageSquare,
-          route: '/soporte',
-          isActive: currentRoute === '/soporte',
-          description: 'Canal de atención y reportes',
-        },
-      ]
-    : [
-        exploreItem,
-        {
-          id: 'pedidos',
-          label: currentUser?.role === 'cliente' ? 'Mis Pedidos' : 'Pedidos',
-          shortLabel: 'Pedidos',
-          icon: ShoppingBag,
-          route: currentUser?.role === 'cliente' ? '/cliente' : '/cliente/ingresar',
-          isActive: currentUser?.role === 'cliente' && currentRoute === '/cliente',
-          description: 'Estado de preparación en barra',
-        },
-        {
-          id: 'cuentas',
-          label: currentUser?.role === 'superadmin'
-            ? 'Auditoría Global'
-            : 'Saldos a Fin de Mes',
-          shortLabel: 'Cuentas',
-          icon: Receipt,
-          route: currentUser?.role === 'superadmin'
-            ? '/superadmin'
-            : currentUser?.role === 'cliente'
-              ? '/cliente'
-              : '/cliente/ingresar',
-          isActive:
-            (currentRoute === '/cliente' && currentUser?.role === 'cliente') ||
-            (currentRoute === '/superadmin' && currentUser?.role === 'superadmin'),
-          description: 'Libro contable y abonos',
-        },
-        {
-          id: 'soporte',
-          label: 'Soporte y Casos',
-          shortLabel: 'Soporte',
-          icon: MessageSquare,
-          route: '/soporte',
-          isActive: currentRoute === '/soporte',
-          description: 'Canal de atención y reportes',
-        },
-      ];
+  // Cada opción lateral abre una sección propia del panel correspondiente.
+  const makeNavItem = (
+    id: string,
+    label: string,
+    shortLabel: string,
+    icon: React.ElementType,
+    route: string,
+    description: string
+  ): SidebarNavigationItem => ({
+    id,
+    label,
+    shortLabel,
+    icon,
+    route,
+    description,
+    isActive:
+      currentRoute === route ||
+      (id === 'explorar' && currentRoute.startsWith('/c/')) ||
+      (id === 'pedidos' && (currentRoute === '/cliente' || currentRoute === '/dueno')) ||
+      (id === 'negocios' && currentRoute === '/superadmin'),
+  });
 
-  // Elementos adicionales según rol
-  if (currentUser?.role === 'superadmin') {
-    navItems.push({
-      id: 'superadmin',
-      label: 'Superadministración',
-      shortLabel: 'Admin',
-      icon: Shield,
-      route: '/superadmin',
-      isActive: currentRoute === '/superadmin',
-      description: 'Control de cafeterías y auditoría',
-    });
-  } else if (!currentUser) {
-    navItems.push({
-      id: 'dueno_ingreso',
-      label: 'Acceso para Dueños',
-      shortLabel: 'Dueños',
-      icon: Store,
-      route: '/dueno/ingresar',
-      isActive: currentRoute === '/dueno/ingresar',
-      description: 'Gestiona tu cafetería o comedor',
-    });
+  const navItems: SidebarNavigationItem[] = [
+    makeNavItem('explorar', 'Explorar Cafeterías', 'Inicio', Store, '/', 'Menús y pedidos para recoger'),
+  ];
+
+  if (currentUser?.role === 'dueno') {
+    navItems.push(
+      makeNavItem('pedidos', 'Pedidos en Vivo', 'Pedidos', ShoppingBag, '/dueno/pedidos', 'Estado de preparación en barra'),
+      makeNavItem('menu', 'Menú y Platillos', 'Menú', Coffee, '/dueno/menu', 'Administra categorías y platillos'),
+      makeNavItem('clientes', 'Clientes y Fin de Mes', 'Clientes', Receipt, '/dueno/clientes', 'Saldos, crédito y abonos'),
+      makeNavItem('qr', 'Código QR del negocio', 'Código QR', QrCode, '/dueno/qr', 'Comparte el menú de tu local'),
+      makeNavItem('soporte', 'Soporte y Casos', 'Soporte', MessageSquare, '/soporte', 'Canal de atención y reportes')
+    );
+  } else if (currentUser?.role === 'cliente') {
+    navItems.push(
+      makeNavItem('pedidos', 'Mis Pedidos', 'Pedidos', ShoppingBag, '/cliente/pedidos', 'Estado y seguimiento de pedidos'),
+      makeNavItem('cuentas', 'Cuentas y Saldos', 'Cuentas', Receipt, '/cliente/cuentas', 'Consumos, pagos e historial'),
+      makeNavItem('soporte', 'Soporte y Casos', 'Soporte', MessageSquare, '/soporte', 'Canal de atención y reportes')
+    );
+  } else if (currentUser?.role === 'superadmin') {
+    navItems.push(
+      makeNavItem('negocios', 'Negocios', 'Negocios', Store, '/superadmin/negocios', 'Gestión de cafeterías y comedores'),
+      makeNavItem('soporte_admin', 'Soporte y Casos', 'Soporte', MessageSquare, '/superadmin/soporte', 'Bandeja global de atención'),
+      makeNavItem('auditoria', 'Auditoría de Plataforma', 'Auditoría', Shield, '/superadmin/auditoria', 'Actividad y cambios registrados')
+    );
+  } else {
+    navItems.push(
+      makeNavItem('cliente_ingreso', 'Acceso para Clientes', 'Clientes', ShoppingBag, '/cliente/ingresar', 'Ingresa o crea tu cuenta'),
+      makeNavItem('dueno_ingreso', 'Acceso para Dueños', 'Dueños', Store, '/dueno/ingresar', 'Gestiona tu cafetería o comedor')
+    );
   }
 
   const renderNavButtons = () => (
@@ -176,14 +127,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onCloseMobile();
             }}
             title={item.label}
-            className={`w-full flex items-center gap-3.5 px-3.5 py-3 rounded-2xl text-left transition-all group relative ${isCollapsed ? 'lg:justify-center lg:px-0' : ''} ${
+            className={`w-full flex items-center gap-3.5 px-3.5 py-3 rounded-2xl text-left transition-all group relative ${
               active
                 ? 'bg-amber-800 text-white shadow-sm font-bold'
                 : 'text-stone-700 hover:text-stone-900 hover:bg-stone-200/70 font-semibold'
             }`}
           >
             <div
-              className={`w-8 h-8 flex items-center justify-center p-0 rounded-xl shrink-0 transition-colors ${
+              className={`p-2 rounded-xl shrink-0 transition-colors ${
                 active
                   ? 'bg-amber-700 text-white'
                   : 'bg-stone-200/80 text-stone-700 group-hover:bg-amber-100 group-hover:text-amber-900'
@@ -239,13 +190,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
         }`}
       >
         {/* Parte Superior: Marca y Toggle */}
-        <div className={`relative p-4 border-b border-stone-200 flex items-center justify-between gap-2 ${isCollapsed ? 'lg:px-0' : ''}`}>
+        <div className="p-4 border-b border-stone-200 flex items-center justify-between gap-2">
           <button
             onClick={() => {
               onNavigate('/');
               onCloseMobile();
             }}
-            className={`flex items-center gap-3 text-left focus:outline-none group overflow-hidden ${isCollapsed ? 'lg:absolute lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2' : ''}`}
+            className="flex items-center gap-3 text-left focus:outline-none group overflow-hidden"
           >
             <div className="w-10 h-10 rounded-2xl bg-amber-800 text-white flex items-center justify-center shrink-0 shadow-xs group-hover:bg-amber-900 transition-colors">
               <Coffee className="w-5 h-5 text-amber-100" />
@@ -285,6 +236,64 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {renderNavButtons()}
         </div>
 
+        {/* Zona Inferior: Perfil solo cuando hay una sesión activa */}
+        {currentUser && (
+          <div className="p-3 border-t border-stone-200 bg-stone-50/80">
+            <div
+              className={`rounded-2xl border border-stone-200 bg-white p-3 shadow-xs space-y-2 ${
+                isCollapsed ? 'text-center' : ''
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="relative shrink-0">
+                  <UserAvatar
+                    nombre={currentUser.nombre}
+                    avatarUrl={currentUser.avatarUrl}
+                    role={currentUser.role}
+                    size={isCollapsed ? 'sm' : 'md'}
+                  />
+                  <button
+                    onClick={onOpenAvatarModal}
+                    title="Cambiar foto de perfil"
+                    className="absolute -bottom-1 -right-1 p-1 bg-stone-900 text-white rounded-full shadow-xs hover:bg-amber-800 transition-colors"
+                  >
+                    <Camera className="w-2.5 h-2.5" />
+                  </button>
+                </div>
+
+                {!isCollapsed && (
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-stone-900 truncate">
+                      {currentUser.nombre}
+                    </p>
+                    <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/60 capitalize">
+                      {currentUser.role}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {!isCollapsed && (
+                <div className="pt-2 border-t border-stone-100 flex items-center justify-between text-xs">
+                  <button
+                    onClick={onOpenAvatarModal}
+                    className="text-[11px] font-semibold text-stone-600 hover:text-stone-900"
+                  >
+                    Editar foto
+                  </button>
+
+                  <button
+                    onClick={handleLogout}
+                    className="text-[11px] font-bold text-rose-600 hover:text-rose-800 flex items-center gap-1"
+                  >
+                    <LogOut className="w-3 h-3" />
+                    Salir
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </aside>
 
       {/* Barra de Navegación Inferior Móvil (Mobile Bottom Bar amigable) */}
@@ -312,6 +321,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
           );
         })}
 
+        {currentUser && (
+          <button
+            onClick={onOpenAvatarModal}
+            className="flex flex-col items-center justify-center py-1 px-2 rounded-xl text-stone-600"
+          >
+            <UserAvatar
+              nombre={currentUser.nombre}
+              avatarUrl={currentUser.avatarUrl}
+              role={currentUser.role}
+              size="sm"
+            />
+            <span className="text-[10px] mt-0.5 font-orlando">Perfil</span>
+          </button>
+        )}
       </nav>
     </>
   );
