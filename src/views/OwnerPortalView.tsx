@@ -79,6 +79,7 @@ import cafePourover from '../assets/images/cafe_pourover_honduras_1793909290813.
 
 interface OwnerPortalViewProps {
   currentUser: User;
+  currentRoute: string;
   onNavigate: (route: string) => void;
   onSelectCafe: (slug: string) => void;
   onUserUpdated: (user: User) => void;
@@ -86,6 +87,7 @@ interface OwnerPortalViewProps {
 
 export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
   currentUser,
+  currentRoute,
   onNavigate,
   onSelectCafe,
   onUserUpdated,
@@ -102,9 +104,11 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
   );
   const currentBiz = ownedBusinesses.find((b) => b.id === selectedBizId) || ownedBusinesses[0];
 
-  const [activeTab, setActiveTab] = useState<
-    'pedidos' | 'menu' | 'clientes' | 'qr' | 'perfil'
-  >('pedidos');
+  const activeTab: 'pedidos' | 'menu' | 'clientes' | 'qr' | 'perfil' =
+    currentRoute === '/dueno/menu' ? 'menu'
+      : currentRoute === '/dueno/clientes' ? 'clientes'
+        : currentRoute === '/dueno/qr' ? 'qr'
+          : 'pedidos';
 
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
@@ -778,7 +782,7 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
       {/* Barra de Pestañas del Panel de Dueño */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-stone-200 scrollbar-none">
         <button
-          onClick={() => setActiveTab('pedidos')}
+          onClick={() => onNavigate('/dueno/pedidos')}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold font-orlando tracking-wide whitespace-nowrap shrink-0 transition-colors ${
             activeTab === 'pedidos'
               ? 'bg-stone-900 text-white shadow-xs'
@@ -789,7 +793,7 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
         </button>
 
         <button
-          onClick={() => setActiveTab('menu')}
+          onClick={() => onNavigate('/dueno/menu')}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold font-orlando tracking-wide whitespace-nowrap shrink-0 transition-colors ${
             activeTab === 'menu'
               ? 'bg-stone-900 text-white shadow-xs'
@@ -800,7 +804,7 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
         </button>
 
         <button
-          onClick={() => setActiveTab('clientes')}
+          onClick={() => onNavigate('/dueno/clientes')}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold font-orlando tracking-wide whitespace-nowrap shrink-0 transition-colors ${
             activeTab === 'clientes'
               ? 'bg-stone-900 text-white shadow-xs'
@@ -811,7 +815,7 @@ export const OwnerPortalView: React.FC<OwnerPortalViewProps> = ({
         </button>
 
         <button
-          onClick={() => setActiveTab('qr')}
+          onClick={() => onNavigate('/dueno/qr')}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold font-orlando tracking-wide whitespace-nowrap shrink-0 transition-colors ${
             activeTab === 'qr'
               ? 'bg-stone-900 text-white shadow-xs'
