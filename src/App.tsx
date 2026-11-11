@@ -178,7 +178,7 @@ export default function App() {
     }
 
     // 3. Portal de Cliente (/cliente) - Protegido
-    if (currentRoute === '/cliente') {
+    if (currentRoute === '/cliente' || currentRoute.startsWith('/cliente/')) {
       if (!currentUser) {
         return (
           <div className="bg-white rounded-3xl p-12 text-center border border-stone-200 max-w-md mx-auto my-12 space-y-4">
@@ -200,6 +200,7 @@ export default function App() {
       return (
         <ClientPortalView
           currentUser={currentUser}
+          currentRoute={currentRoute}
           onNavigate={navigateTo}
           onSelectCafe={handleSelectCafe}
           onUserUpdated={handleUserChanged}
@@ -239,13 +240,15 @@ export default function App() {
         <OwnerPortalView
           currentUser={currentUser}
           currentRoute={currentRoute}
+          onNavigate={navigateTo}
           onSelectCafe={handleSelectCafe}
+          onUserUpdated={handleUserChanged}
         />
       );
     }
 
     // 5. Portal de Superadministrador (/superadmin) - Protegido
-    if (currentRoute === '/superadmin') {
+    if (currentRoute === '/superadmin' || currentRoute.startsWith('/superadmin/')) {
       if (!currentUser || currentUser.role !== 'superadmin') {
         return (
           <div className="bg-white rounded-3xl p-12 text-center border border-stone-200 max-w-md mx-auto my-12 space-y-4">
@@ -267,6 +270,7 @@ export default function App() {
       return (
         <SuperadminPortalView
           currentUser={currentUser}
+          currentRoute={currentRoute}
           onNavigate={navigateTo}
           onSelectCafe={handleSelectCafe}
           onUserUpdated={handleUserChanged}
@@ -301,8 +305,10 @@ export default function App() {
         currentUser={currentUser}
         currentRoute={currentRoute}
         onNavigate={navigateTo}
+        onUserChanged={handleUserChanged}
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        onOpenAvatarModal={() => setShowGlobalAvatarModal(true)}
         mobileOpen={mobileSidebarOpen}
         onCloseMobile={() => setMobileSidebarOpen(false)}
       />
