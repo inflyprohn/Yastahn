@@ -35,13 +35,15 @@ export const TopBar: React.FC<TopBarProps> = ({
   const getPageTitle = () => {
     if (currentRoute === '/') return 'Cafeterías y Comedores';
     if (currentRoute.startsWith('/c/')) return 'Menú de Cafetería';
-    if (currentRoute === '/cliente') return 'Mis Pedidos y Saldos';
-    if (currentRoute === '/dueno/pedidos' || currentRoute === '/dueno') return 'Pedidos en Vivo';
+    if (currentRoute === '/cliente' || currentRoute === '/cliente/pedidos') return 'Mis Pedidos';
+    if (currentRoute === '/cliente/cuentas') return 'Cuentas y Saldos';
+    if (currentRoute === '/dueno' || currentRoute === '/dueno/pedidos') return 'Pedidos en Vivo';
     if (currentRoute === '/dueno/menu') return 'Menú y Platillos';
-    if (currentRoute === '/dueno/cuentas') return 'Clientes y Fin de Mes';
-    if (currentRoute === '/dueno/qr') return 'Código QR del Negocio';
-    if (currentRoute.startsWith('/dueno/') && !currentRoute.includes('ingresar') && !currentRoute.includes('registro')) return 'Panel de Gestión Comercial';
-    if (currentRoute === '/superadmin') return 'Superadministración de Plataforma';
+    if (currentRoute === '/dueno/clientes') return 'Clientes y Fin de Mes';
+    if (currentRoute === '/dueno/qr') return 'Código QR del negocio';
+    if (currentRoute === '/superadmin' || currentRoute === '/superadmin/negocios') return 'Gestión de Negocios';
+    if (currentRoute === '/superadmin/soporte') return 'Bandeja Global de Soporte';
+    if (currentRoute === '/superadmin/auditoria') return 'Auditoría de Plataforma';
     if (currentRoute === '/soporte') return 'Centro de Soporte y Casos';
     if (currentRoute.includes('ingresar')) return 'Iniciar Sesión';
     if (currentRoute.includes('registro')) return 'Registro de Cliente';
@@ -53,7 +55,7 @@ export const TopBar: React.FC<TopBarProps> = ({
       <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-stone-200 no-print">
         <div className="w-full px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           {/* Lado Izquierdo: Botón Menú Móvil + Título Contextual */}
-          <div className="flex min-w-0 flex-1 items-center gap-3">
+          <div className="flex items-center gap-3">
             <button
               onClick={onOpenMobileSidebar}
               className="lg:hidden p-2 rounded-xl text-stone-700 hover:text-stone-900 hover:bg-stone-100 transition-colors focus:outline-none"
@@ -62,7 +64,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               <HamburgerIcon className="w-5 h-5" />
             </button>
 
-            <div className="min-w-0 flex-1">
+            <div>
               <h1 className="text-base sm:text-lg font-black font-orlando text-stone-900 tracking-tight leading-tight">
                 {getPageTitle()}
               </h1>
@@ -119,14 +121,14 @@ export const TopBar: React.FC<TopBarProps> = ({
                       className="w-full px-4 py-2 text-left text-xs text-stone-700 hover:bg-stone-50 flex items-center gap-2 transition-colors"
                     >
                       <UserIcon className="w-4 h-4 text-stone-500" />
-                      Editar perfil
+                      Foto de perfil
                     </button>
 
                     {currentUser.role === 'cliente' && (
                       <button
                         onClick={() => {
                           setShowUserDropdown(false);
-                          onNavigate('/cliente');
+                          onNavigate('/cliente/pedidos');
                         }}
                         className="w-full px-4 py-2 text-left text-xs text-stone-700 hover:bg-stone-50 flex items-center gap-2 transition-colors"
                       >
@@ -152,7 +154,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                       <button
                         onClick={() => {
                           setShowUserDropdown(false);
-                          onNavigate('/superadmin');
+                          onNavigate('/superadmin/negocios');
                         }}
                         className="w-full px-4 py-2 text-left text-xs text-stone-700 hover:bg-stone-50 flex items-center gap-2 transition-colors"
                       >
