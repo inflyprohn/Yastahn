@@ -34,6 +34,7 @@ import { AvatarModal } from '../components/AvatarModal';
 
 interface ClientPortalViewProps {
   currentUser: User;
+  currentRoute: string;
   onNavigate: (route: string) => void;
   onSelectCafe: (slug: string) => void;
   onUserUpdated: (user: User) => void;
@@ -41,11 +42,12 @@ interface ClientPortalViewProps {
 
 export const ClientPortalView: React.FC<ClientPortalViewProps> = ({
   currentUser,
+  currentRoute,
   onNavigate,
   onSelectCafe,
   onUserUpdated,
 }) => {
-  const [activeTab, setActiveTab] = useState<'pedidos' | 'cuentas'>('pedidos');
+  const activeTab: 'pedidos' | 'cuentas' = currentRoute === '/cliente/cuentas' ? 'cuentas' : 'pedidos';
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -225,7 +227,7 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({
       {/* Tabs de Navegación Segmentada */}
       <div className="flex items-center gap-2 border-b border-stone-200 pb-2">
         <button
-          onClick={() => setActiveTab('pedidos')}
+          onClick={() => onNavigate('/cliente/pedidos')}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold font-orlando tracking-wide transition-colors ${
             activeTab === 'pedidos'
               ? 'bg-stone-900 text-white shadow-xs'
@@ -235,7 +237,7 @@ export const ClientPortalView: React.FC<ClientPortalViewProps> = ({
           Mis Pedidos ({orders.length})
         </button>
         <button
-          onClick={() => setActiveTab('cuentas')}
+          onClick={() => onNavigate('/cliente/cuentas')}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold font-orlando tracking-wide transition-colors ${
             activeTab === 'cuentas'
               ? 'bg-stone-900 text-white shadow-xs'
