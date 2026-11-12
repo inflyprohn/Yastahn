@@ -40,6 +40,7 @@ import { AvatarModal } from '../components/AvatarModal';
 
 interface SuperadminPortalViewProps {
   currentUser: User;
+  currentRoute: string;
   onNavigate: (route: string) => void;
   onSelectCafe: (slug: string) => void;
   onUserUpdated: (user: User) => void;
@@ -47,11 +48,15 @@ interface SuperadminPortalViewProps {
 
 export const SuperadminPortalView: React.FC<SuperadminPortalViewProps> = ({
   currentUser,
+  currentRoute,
   onNavigate,
   onSelectCafe,
   onUserUpdated,
 }) => {
-  const [activeTab, setActiveTab] = useState<'negocios' | 'soporte' | 'auditoria'>('negocios');
+  const activeTab: 'negocios' | 'soporte' | 'auditoria' =
+    currentRoute === '/superadmin/soporte' ? 'soporte'
+      : currentRoute === '/superadmin/auditoria' ? 'auditoria'
+        : 'negocios';
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [feedbackToast, setFeedbackToast] = useState<string | null>(null);
@@ -375,7 +380,7 @@ export const SuperadminPortalView: React.FC<SuperadminPortalViewProps> = ({
       {/* Tabs */}
       <div className="flex items-center gap-2 border-b border-stone-200 pb-2">
         <button
-          onClick={() => setActiveTab('negocios')}
+          onClick={() => onNavigate('/superadmin/negocios')}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold font-orlando tracking-wide transition-colors ${
             activeTab === 'negocios'
               ? 'bg-stone-900 text-white shadow-xs'
@@ -386,7 +391,7 @@ export const SuperadminPortalView: React.FC<SuperadminPortalViewProps> = ({
         </button>
 
         <button
-          onClick={() => setActiveTab('soporte')}
+          onClick={() => onNavigate('/superadmin/soporte')}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold font-orlando tracking-wide transition-colors ${
             activeTab === 'soporte'
               ? 'bg-stone-900 text-white shadow-xs'
@@ -397,7 +402,7 @@ export const SuperadminPortalView: React.FC<SuperadminPortalViewProps> = ({
         </button>
 
         <button
-          onClick={() => setActiveTab('auditoria')}
+          onClick={() => onNavigate('/superadmin/auditoria')}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold font-orlando tracking-wide transition-colors ${
             activeTab === 'auditoria'
               ? 'bg-stone-900 text-white shadow-xs'
